@@ -28,16 +28,10 @@ class CMPS12:
             return x
 
 
-
 if __name__ == "__main__":
     import time
-    from pythonosc import udp_client
-    client = udp_client.SimpleUDPClient("192.168.1.15", 7770) 
     imu = CMPS12(SMBus(1))
     while True:
         imu.update()
         print(f"heading = {imu.heading()}\tpich={imu.pitch()}\troll={imu.roll()}")
-        client.send_message("/imu/heading", imu.heading())
-        client.send_message("/imu/pitch", imu.pitch())
-        client.send_message("/imu/roll", imu.roll())
         time.sleep(0.1)
