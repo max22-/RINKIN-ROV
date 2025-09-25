@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "configure" ]; then
+	systemctl daemon-reload
+	systemctl enable mediamtx
+	systemctl start mediamtx
+fi
+
+exit 0

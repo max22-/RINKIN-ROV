@@ -1,0 +1,8 @@
+Package: mediamtx
+Source: mediamtx-src
+Version: 1.15.0
+Architecture: arm64
+Maintainer: Maxime André
+Depends: systemd
+Priority: optional
+Description: Real-time media server
