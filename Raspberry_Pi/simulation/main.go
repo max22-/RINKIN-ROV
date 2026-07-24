@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"simulation/rov"
-	"time"
 )
 
 func main() {
@@ -24,8 +23,6 @@ func main() {
 
 	udpChan, addrChan := udpRecv(conn)
 
-	var info rov.ROVInfo
-
 	rov := rov.New()
 
 	for {
@@ -36,24 +33,9 @@ func main() {
 		case udpPacket := <-udpChan:
 			fmt.Println("received command: ", udpPacket)
 			rov.Cmd <- udpPacket
-		case info = <-rov.Info:
-		case <-time.After(16 * time.Millisecond):
-
-		}
-		if clientAddr != nil {
-			msg := fmt.Sprintf("#pos_x,%f!", info.Position[0])
-			conn.WriteToUDP([]byte(msg), clientAddr)
-			msg = fmt.Sprintf("#pos_y,%f!", info.Position[1])
-			conn.WriteToUDP([]byte(msg), clientAddr)
-			msg = fmt.Sprintf("#pos_z,%f!", info.Position[2])
-			conn.WriteToUDP([]byte(msg), clientAddr)
-			msg = fmt.Sprintf("#heading,%f!", info.Orientation.Heading)
-			conn.WriteToUDP([]byte(msg), clientAddr)
-			msg = fmt.Sprintf("#pitch,%f!", info.Orientation.Pitch)
-			conn.WriteToUDP([]byte(msg), clientAddr)
-			msg = fmt.Sprintf("#roll,%f!", info.Orientation.Roll)
-			conn.WriteToUDP([]byte(msg), clientAddr)
-			fmt.Println("info: ", info)
+		case info := <-rov.Info:
+			fmt.Println("sending ", info)
+			conn.WriteToUDP([]byte(info), clientAddr)
 		}
 	}
 }

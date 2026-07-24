@@ -12,13 +12,12 @@ import (
 	"github.com/ungerik/go3d/vec3"
 )
 
-type EulerAngles struct {
-	Heading, Pitch, Roll float32
+type Color struct {
+	r, g, b uint8
 }
 
-type ROVInfo struct {
-	Position    [3]float32
-	Orientation EulerAngles
+type EulerAngles struct {
+	Heading, Pitch, Roll float32
 }
 
 type Motor struct {
@@ -28,7 +27,7 @@ type Motor struct {
 }
 
 func (m Motor) getForce() vec3.T {
-	return m.orientation.Scaled(0.01 * m.speed)
+	return m.orientation.Scaled(0.1 * m.speed)
 }
 
 func newMotor(position, orientation vec3.T) Motor {
@@ -49,11 +48,13 @@ type ROV struct {
 	angularVelocity           vec3.T
 	angularMomentum           vec3.T
 	motors                    [5]Motor
-	Info                      chan ROVInfo
+	Info                      chan string
+	lastInfoSentTime          time.Time
 	Cmd                       chan string
 	dt                        time.Duration
 	momentOfInertia           vec3.T
 	sumOfForces, sumOfTorques vec3.T
+	started                   bool
 }
 
 func New() *ROV {
@@ -73,21 +74,27 @@ func New() *ROV {
 			newMotor(vec3.T{-0.120, 0.102, -0.117}, vec3.T{0, 1, 0}),
 			newMotor(vec3.T{0.120, 0.102, -0.117}, vec3.T{0, 1, 0}),
 		},
-		Info:            make(chan ROVInfo),
-		Cmd:             make(chan string),
-		dt:              1 * time.Millisecond,
-		momentOfInertia: vec3.T{1, 1, 1},
-		sumOfForces:     vec3.T{0, 0, 0},
-		sumOfTorques:    vec3.T{0, 0, 0},
+		Info:             make(chan string),
+		lastInfoSentTime: time.Now(),
+		Cmd:              make(chan string),
+		dt:               1 * time.Millisecond,
+		momentOfInertia:  vec3.T{1, 1, 1},
+		sumOfForces:      vec3.T{0, 0, 0},
+		sumOfTorques:     vec3.T{0, 0, 0},
+		started:          false,
 	}
 	return r
 }
 
 func (r *ROV) Start() {
+	if r.started {
+		return
+	}
 	fmt.Println("Start")
 	go func() {
 		r.loop()
 	}()
+	r.started = true
 }
 
 func (r *ROV) loop() {
@@ -143,29 +150,12 @@ func (r *ROV) loop() {
 
 		r.orientation.Normalize()
 
-		heading, pitch, roll := r.orientation.ToEulerAngles()
-		heading *= 180 / math.Pi
-		pitch *= 180 / math.Pi
-		roll *= 180 / math.Pi
-
-		select {
-		case r.Info <- ROVInfo{
-			//Position: r.position.Scaled(1000),
-			Position: vec3.T{0, 0, 0},
-			Orientation: EulerAngles{
-				Heading: heading,
-				Pitch:   pitch,
-				Roll:    roll,
-			},
-		}:
-		default:
-		}
-		fmt.Println("position: ", r.position)
-		fmt.Println("velocity: ", r.velocity)
-		fmt.Println("quaternion: ", r.orientation)
-		fmt.Println("orientation: ", heading, pitch, roll)
-		fmt.Println("angular momentum: ", r.angularMomentum)
-		time.Sleep(10 * r.dt)
+		r.sendInfo()
+		//fmt.Println("position: ", r.position)
+		//fmt.Println("velocity: ", r.velocity)
+		//fmt.Println("quaternion: ", r.orientation)
+		//fmt.Println("angular momentum: ", r.angularMomentum)
+		time.Sleep(1 * r.dt)
 	}
 }
 
@@ -202,5 +192,62 @@ func (r *ROV) runCmd(cmd string) {
 		r.motors[motor].speed = float32(speed)
 		fmt.Printf("motor=%d speed = %d\n", motor, speed)
 	}
+}
 
+func (r *ROV) sendInfo() {
+	if time.Since(r.lastInfoSentTime) < 16*time.Millisecond {
+		return
+	}
+	//pos := r.position.Scaled(1000)
+	//r.sendString(fmt.Sprintf("#position,%f,%f,%f!", pos[0], pos[1], pos[2]))
+
+	r.sendString(fmt.Sprintf("#quaternion,%f,%f,%f,%f!",
+		r.orientation[0],
+		r.orientation[1],
+		r.orientation[2],
+		r.orientation[3],
+	))
+
+	heading, pitch, roll := r.orientation.ToEulerAngles()
+	heading *= 180 / math.Pi
+	pitch *= 180 / math.Pi
+	roll *= 180 / math.Pi
+	r.sendString(fmt.Sprintf("#heading,%f!", heading))
+	r.sendString(fmt.Sprintf("#pitch,%f!", pitch))
+	r.sendString(fmt.Sprintf("#roll,%f!", roll))
+
+	//r.sendString(fmt.Sprintf("#roll,%f!", pitch))
+
+	r.drawVector("x", vec3.T{0, 0, 0}, r.toWorld(r.orientation.RotatedVec3(&vec3.T{400, 0, 0})), Color{255, 0, 0})
+	r.drawVector("y", vec3.T{0, 0, 0}, r.toWorld(r.orientation.RotatedVec3(&vec3.T{0, 400, 0})), Color{0, 255, 0})
+	r.drawVector("z", vec3.T{0, 0, 0}, r.toWorld(r.orientation.RotatedVec3(&vec3.T{0, 0, 400})), Color{0, 0, 255})
+
+	for i, m := range r.motors {
+		r.drawVector(
+			fmt.Sprintf("motor%d", i),
+			r.toWorld(m.position.Scaled(1000)),
+			r.toWorld(m.orientation.Scaled(400)),
+			Color{255, 255, 255},
+		)
+	}
+
+	r.lastInfoSentTime = time.Now()
+}
+
+func (r *ROV) sendString(s string) {
+	r.Info <- s
+	//select {
+	//case r.Info <- s:
+	//default:
+	//}
+}
+
+func (r *ROV) drawVector(name string, p, v vec3.T, color Color) {
+	msg := fmt.Sprintf("#vector,%s,%f,%f,%f,%f,%f,%f,%d,%d,%d!",
+		name,
+		p[0], p[1], p[2],
+		v[0], v[1], v[2],
+		color.r, color.g, color.b,
+	)
+	r.sendString(msg)
 }
