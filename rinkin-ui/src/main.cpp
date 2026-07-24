@@ -29,8 +29,9 @@
 #endif
 
 
-
+float pos_x = 0.0f, pos_y = 0.0f, pos_z = 0.0f;
 float heading = 0.0f, pitch = 0.0f, roll = 0.0f;
+Quaternion quaternion = QuaternionIdentity();
 RenderTexture2D model_texture;
 
 void lua_simple_fcall(lua_State *L, const char *fname) {
@@ -118,11 +119,13 @@ int main(int argc, char* argv[]) {
 		}
 		lua_udp_callback(L);
 
-		//UpdateCamera(&camera, CAMERA_ORBITAL);
+		UpdateCamera(&camera, CAMERA_ORBITAL);
 		float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
 
-		model.transform = MatrixRotateXYZ((Vector3){roll, heading, pitch});
+		// https://www.raylib.com/examples/models/loader.html?name=models_yaw_pitch_roll
+		//model.transform = MatrixRotateXYZ((Vector3){pitch, heading, roll});
+		model.transform = QuaternionToMatrix(quaternion);
 
 		BeginTextureMode(model_texture);
 		{
@@ -131,11 +134,13 @@ int main(int argc, char* argv[]) {
 			{
 				BeginShaderMode(shader);
 				{
-					DrawModel(model, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
+					DrawModel(model, (Vector3){pos_x, pos_y, pos_z}, 1.0f, WHITE);
 					//DrawCube(Vector3Zero(), 50, 50, 50, WHITE);
 				}
 				EndShaderMode();
 				DrawSphereEx(light.position, 10.0f, 8, 8, light.color);
+				DrawGrid(20, 40.0f);
+				lua_simple_fcall(L, "draw_3d");
 			}
 			EndMode3D();
 		}
