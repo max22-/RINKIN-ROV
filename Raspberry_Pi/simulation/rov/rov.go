@@ -76,7 +76,7 @@ func New() *ROV {
 		},
 		Info:             make(chan string),
 		lastInfoSentTime: time.Now(),
-		Cmd:              make(chan string),
+		Cmd:              make(chan string, 16),
 		dt:               1 * time.Millisecond,
 		momentOfInertia:  vec3.T{1, 1, 1},
 		sumOfForces:      vec3.T{0, 0, 0},
@@ -218,9 +218,9 @@ func (r *ROV) sendInfo() {
 
 	//r.sendString(fmt.Sprintf("#roll,%f!", pitch))
 
-	r.drawVector("x", vec3.T{0, 0, 0}, r.toWorld(r.orientation.RotatedVec3(&vec3.T{400, 0, 0})), Color{255, 0, 0})
-	r.drawVector("y", vec3.T{0, 0, 0}, r.toWorld(r.orientation.RotatedVec3(&vec3.T{0, 400, 0})), Color{0, 255, 0})
-	r.drawVector("z", vec3.T{0, 0, 0}, r.toWorld(r.orientation.RotatedVec3(&vec3.T{0, 0, 400})), Color{0, 0, 255})
+	r.drawVector("x", vec3.T{0, 0, 0}, r.toWorld(vec3.T{400, 0, 0}), Color{255, 0, 0})
+	r.drawVector("y", vec3.T{0, 0, 0}, r.toWorld(vec3.T{0, 400, 0}), Color{0, 255, 0})
+	r.drawVector("z", vec3.T{0, 0, 0}, r.toWorld(vec3.T{0, 0, 400}), Color{0, 0, 255})
 
 	for i, m := range r.motors {
 		r.drawVector(
