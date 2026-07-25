@@ -53,9 +53,7 @@ function setup()
 		local command, args = parse(msg)
 		--display_command(command, args)
 		if command == "position" then
-			model.set_pos_x(args[1])
-			model.set_pos_y(args[2])
-			model.set_pos_z(args[3])
+			model.set_pos(table.unpack(args))
 		elseif command == "heading" then
 			model.set_heading(args[1])
 			heading:append(args[1])

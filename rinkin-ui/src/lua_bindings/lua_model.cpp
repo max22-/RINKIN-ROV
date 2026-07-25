@@ -7,18 +7,10 @@ extern float heading, pitch, roll;
 extern Quaternion quaternion;
 extern RenderTexture2D model_texture;
 
-static int lua_set_pos_x(lua_State *L) {
+static int lua_set_pos(lua_State *L) {
     pos_x = luaL_checknumber(L, 1);
-    return 0;
-}
-
-static int lua_set_pos_y(lua_State *L) {
-    pos_y = luaL_checknumber(L, 1);
-    return 0;
-}
-
-static int lua_set_pos_z(lua_State *L) {
-    pos_z = luaL_checknumber(L, 1);
+    pos_y = luaL_checknumber(L, 2);
+    pos_z = luaL_checknumber(L, 3);
     return 0;
 }
 
@@ -77,9 +69,7 @@ static int lua_draw_vector(lua_State *L) {
 }
 
 static const struct luaL_Reg model_lib[] = {
-    {"set_pos_x", lua_set_pos_x},
-    {"set_pos_y", lua_set_pos_y},
-    {"set_pos_z", lua_set_pos_z},
+    {"set_pos", lua_set_pos},
     {"set_heading", lua_set_heading},
     {"set_pitch", lua_set_pitch},
     {"set_roll", lua_set_roll},
