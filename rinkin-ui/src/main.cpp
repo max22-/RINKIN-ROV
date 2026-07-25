@@ -119,7 +119,10 @@ int main(int argc, char* argv[]) {
 		}
 		lua_udp_callback(L);
 
-		UpdateCamera(&camera, CAMERA_ORBITAL);
+		//UpdateCamera(&camera, CAMERA_ORBITAL);
+		camera.position = Vector3{ pos_x + 0.0f, pos_y + 100.0f, pos_z - 1000.0f };
+		camera.target = Vector3{pos_x, pos_y, pos_z};
+
 		float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
 
