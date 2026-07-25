@@ -39,7 +39,7 @@ type ROV struct {
 	velocity                  vec3.T
 	mass                      float32
 	centerOfMass              vec3.T
-	centerOfBuyoancy          vec3.T
+	centerOfBuoyancy          vec3.T
 	orientation               quaternion.T
 	angularVelocity           vec3.T
 	angularMomentum           vec3.T
@@ -59,7 +59,7 @@ func New() *ROV {
 		velocity:         vec3.T{0, 0, 0},
 		mass:             1,
 		centerOfMass:     vec3.T{0, 0, 0},
-		centerOfBuyoancy: vec3.T{0, 0, 0},
+		centerOfBuoyancy: vec3.T{0, 0, 0},
 		orientation:      quaternion.T{0, 0, 0, 1},
 		angularVelocity:  vec3.T{0, 0, 0},
 		angularMomentum:  vec3.T{0, 0, 0},
@@ -113,7 +113,7 @@ func (r *ROV) loop() {
 		)
 		r.applyForce(
 			vec3.T{0, 9.81 * r.mass, 0},
-			r.bodyPointToWorld(r.centerOfBuyoancy),
+			r.bodyPointToWorld(r.centerOfBuoyancy),
 		)
 		for _, m := range r.motors {
 			r.applyForce(
