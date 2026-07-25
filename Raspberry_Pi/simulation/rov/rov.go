@@ -16,10 +16,6 @@ type Color struct {
 	r, g, b uint8
 }
 
-type EulerAngles struct {
-	Heading, Pitch, Roll float32
-}
-
 type Motor struct {
 	position    vec3.T
 	orientation vec3.T
