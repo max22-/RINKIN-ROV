@@ -107,10 +107,19 @@ func (r *ROV) loop() {
 
 		dt := float32(r.dt.Seconds())
 
-		r.applyForce(vec3.T{0, -9.81 * r.mass, 0}, r.centerOfMass)
-		r.applyForce(vec3.T{0, 9.81 * r.mass, 0}, r.centerOfBuyoancy)
+		r.applyForce(
+			vec3.T{0, -9.81 * r.mass, 0},
+			r.bodyPointToWorld(r.centerOfMass),
+		)
+		r.applyForce(
+			vec3.T{0, 9.81 * r.mass, 0},
+			r.bodyPointToWorld(r.centerOfBuyoancy),
+		)
 		for _, m := range r.motors {
-			r.applyForce(r.toWorld(m.getForce()), m.position)
+			r.applyForce(
+				r.bodyVectorToWorld(m.getForce()),
+				r.bodyPointToWorld(m.position),
+			)
 		}
 
 		acceleration := r.sumOfForces.Scaled(1 / r.mass * dt)
@@ -157,13 +166,19 @@ func (r *ROV) loop() {
 
 func (r *ROV) applyForce(f, pos vec3.T) {
 	r.sumOfForces.Add(&f)
-	_r := pos.Subed(&r.centerOfMass)
+	centerOfMass := r.bodyPointToWorld(r.centerOfMass)
+	_r := pos.Subed(&centerOfMass)
 	torque := vec3.Cross(&_r, &f)
 	r.sumOfTorques.Add(&torque)
 }
 
-func (r *ROV) toWorld(v vec3.T) vec3.T {
+func (r *ROV) bodyVectorToWorld(v vec3.T) vec3.T {
 	return r.orientation.RotatedVec3(&v)
+}
+
+func (r *ROV) bodyPointToWorld(p vec3.T) vec3.T {
+	rp := r.orientation.RotatedVec3(&p)
+	return rp.Added(&r.position)
 }
 
 func (r *ROV) runCmd(cmd string) {
@@ -194,8 +209,8 @@ func (r *ROV) sendInfo() {
 	if time.Since(r.lastInfoSentTime) < 16*time.Millisecond {
 		return
 	}
-	//pos := r.position.Scaled(1000)
-	//r.sendString(fmt.Sprintf("#position,%f,%f,%f!", pos[0], pos[1], pos[2]))
+	pos := r.position.Scaled(1000)
+	r.sendString(fmt.Sprintf("#position,%f,%f,%f!", pos[0], pos[1], pos[2]))
 
 	r.sendString(fmt.Sprintf("#quaternion,%f,%f,%f,%f!",
 		r.orientation[0],
@@ -214,15 +229,44 @@ func (r *ROV) sendInfo() {
 
 	//r.sendString(fmt.Sprintf("#roll,%f!", pitch))
 
-	r.drawVector("x", vec3.T{0, 0, 0}, r.toWorld(vec3.T{400, 0, 0}), Color{255, 0, 0})
-	r.drawVector("y", vec3.T{0, 0, 0}, r.toWorld(vec3.T{0, 400, 0}), Color{0, 255, 0})
-	r.drawVector("z", vec3.T{0, 0, 0}, r.toWorld(vec3.T{0, 0, 400}), Color{0, 0, 255})
+	r.drawVector(
+		"x",
+		r.bodyPointToWorld(vec3.T{0, 0, 0}),
+		r.bodyVectorToWorld(vec3.T{400, 0, 0}),
+		Color{255, 0, 0},
+	)
+	r.drawVector(
+		"y",
+		r.bodyPointToWorld(vec3.T{0, 0, 0}),
+		r.bodyVectorToWorld(vec3.T{0, 400, 0}),
+		Color{0, 255, 0},
+	)
+	r.drawVector(
+		"z",
+		r.bodyPointToWorld(vec3.T{0, 0, 0}),
+		r.bodyVectorToWorld(vec3.T{0, 0, 400}),
+		Color{0, 0, 255},
+	)
+
+	r.drawVector(
+		"sumOfForces",
+		r.bodyPointToWorld(vec3.T{0, 0, 0}),
+		r.sumOfForces.Scaled(10),
+		Color{0, 255, 255},
+	)
+
+	r.drawVector(
+		"sumOfTorques",
+		r.bodyPointToWorld(vec3.T{0, 0, 0}),
+		r.sumOfTorques.Scaled(10),
+		Color{0, 255, 255},
+	)
 
 	for i, m := range r.motors {
 		r.drawVector(
 			fmt.Sprintf("motor%d", i),
-			r.toWorld(m.position.Scaled(1000)),
-			r.toWorld(m.orientation.Scaled(400)),
+			r.bodyPointToWorld(m.position),
+			r.bodyVectorToWorld(m.orientation),
 			Color{255, 255, 255},
 		)
 	}
@@ -239,6 +283,8 @@ func (r *ROV) sendString(s string) {
 }
 
 func (r *ROV) drawVector(name string, p, v vec3.T, color Color) {
+	p = p.Scaled(1000)
+	v = v.Scaled(1000)
 	msg := fmt.Sprintf("#vector,%s,%f,%f,%f,%f,%f,%f,%d,%d,%d!",
 		name,
 		p[0], p[1], p[2],
