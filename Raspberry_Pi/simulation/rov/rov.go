@@ -325,3 +325,39 @@ func (r *ROV) reset() {
 	r.angularVelocity = vec3.T{0, 0, 0}
 	r.angularMomentum = vec3.T{0, 0, 0}
 }
+
+func (r *ROV) DisplayMatrix() {
+	mat := [6][5]float32{}
+	for i, m := range r.motors {
+		mat[0][i] = m.orientation[0]
+		mat[1][i] = m.orientation[1]
+		mat[2][i] = m.orientation[2]
+		_r := m.position.Subed(&r.centerOfMass)
+		torque := vec3.Cross(&_r, &m.orientation)
+		mat[3][i] = torque[0]
+		mat[4][i] = torque[1]
+		mat[5][i] = torque[2]
+	}
+	for j := range 6 {
+		for i := range 5 {
+			fmt.Printf("%f\t", mat[j][i])
+		}
+		fmt.Println()
+	}
+
+	fmt.Print("A = np.array([")
+	for i := range 5 {
+		if i != 0 {
+			fmt.Print(", ")
+		}
+		fmt.Print("[")
+		for j := range 6 {
+			if j != 0 {
+				fmt.Print(", ")
+			}
+			fmt.Print(mat[j][i])
+		}
+		fmt.Print("]")
+	}
+	fmt.Println("])")
+}

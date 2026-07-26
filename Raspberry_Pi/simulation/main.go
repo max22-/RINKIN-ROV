@@ -24,6 +24,7 @@ func main() {
 	udpChan, addrChan := udpRecv(conn)
 
 	rov := rov.New()
+	rov.DisplayMatrix()
 
 	for {
 		select {
