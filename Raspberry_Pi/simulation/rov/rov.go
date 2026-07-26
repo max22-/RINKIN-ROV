@@ -43,6 +43,7 @@ type ROV struct {
 	orientation               quaternion.T
 	angularVelocity           vec3.T
 	angularMomentum           vec3.T
+	linearDrag, angularDrag   float32
 	motors                    [5]Motor
 	Info                      chan string
 	lastInfoSentTime          time.Time
@@ -63,6 +64,8 @@ func New() *ROV {
 		orientation:      quaternion.T{0, 0, 0, 1},
 		angularVelocity:  vec3.T{0, 0, 0},
 		angularMomentum:  vec3.T{0, 0, 0},
+		linearDrag:       10,
+		angularDrag:      1,
 		motors: [5]Motor{
 			newMotor(vec3.T{0, 0.112, 0.230}, vec3.T{0, 1, 0}),
 			newMotor(vec3.T{-0.120, 0, -0.041}, vec3.T{0, 0, 1}),
@@ -122,6 +125,13 @@ func (r *ROV) loop() {
 			)
 		}
 
+		r.applyForce(
+			r.velocity.Scaled(-1*r.linearDrag),
+			r.bodyPointToWorld(r.centerOfMass),
+		)
+
+		r.applyTorque(r.angularVelocity.Scaled(-1 * r.angularDrag))
+
 		acceleration := r.sumOfForces.Scaled(1 / r.mass * dt)
 		r.velocity.Add(&acceleration)
 		velocity := r.velocity.Scaled(dt)
@@ -133,9 +143,9 @@ func (r *ROV) loop() {
 		r.angularMomentum.Add(&dL)
 
 		invertedInertia := vec3.T{1 / r.momentOfInertia[0], 1 / r.momentOfInertia[1], 1 / r.momentOfInertia[2]}
-		angularVelocity := r.angularMomentum.Muled(&invertedInertia)
+		r.angularVelocity = r.angularMomentum.Muled(&invertedInertia)
 		r.orientation.Normalize()
-		w := quaternion.T{angularVelocity[0], angularVelocity[1], angularVelocity[2], 0}
+		w := quaternion.T{r.angularVelocity[0], r.angularVelocity[1], r.angularVelocity[2], 0}
 		spin := quaternion.MulRaw(&w, &r.orientation)
 		spin[0] *= 0.5
 		spin[1] *= 0.5
@@ -169,7 +179,11 @@ func (r *ROV) applyForce(f, pos vec3.T) {
 	centerOfMass := r.bodyPointToWorld(r.centerOfMass)
 	_r := pos.Subed(&centerOfMass)
 	torque := vec3.Cross(&_r, &f)
-	r.sumOfTorques.Add(&torque)
+	r.applyTorque(torque)
+}
+
+func (r *ROV) applyTorque(t vec3.T) {
+	r.sumOfTorques.Add(&t)
 }
 
 func (r *ROV) bodyVectorToWorld(v vec3.T) vec3.T {
@@ -182,6 +196,9 @@ func (r *ROV) bodyPointToWorld(p vec3.T) vec3.T {
 }
 
 func (r *ROV) runCmd(cmd string) {
+	if cmd == "#reset!\n" {
+		r.reset()
+	}
 	regex, _ := regexp.Compile(`#(\d+)m(-?\d+)!\n`)
 
 	l := regex.FindStringSubmatch(cmd)
@@ -252,7 +269,7 @@ func (r *ROV) sendInfo() {
 		"sumOfForces",
 		r.bodyPointToWorld(vec3.T{0, 0, 0}),
 		r.sumOfForces.Scaled(10),
-		Color{0, 255, 255},
+		Color{255, 165, 0},
 	)
 
 	r.drawVector(
@@ -266,10 +283,17 @@ func (r *ROV) sendInfo() {
 		r.drawVector(
 			fmt.Sprintf("motor%d", i),
 			r.bodyPointToWorld(m.position),
-			r.bodyVectorToWorld(m.orientation),
+			r.bodyVectorToWorld(m.orientation.Scaled(m.speed)),
 			Color{255, 255, 255},
 		)
 	}
+
+	r.drawVector(
+		"angularVelocity",
+		r.bodyPointToWorld(vec3.T{0, 0, 0}),
+		r.angularVelocity,
+		Color{255, 255, 0},
+	)
 
 	r.lastInfoSentTime = time.Now()
 }
@@ -292,4 +316,12 @@ func (r *ROV) drawVector(name string, p, v vec3.T, color Color) {
 		color.r, color.g, color.b,
 	)
 	r.sendString(msg)
+}
+
+func (r *ROV) reset() {
+	r.position = vec3.T{0, 0, 0}
+	r.velocity = vec3.T{0, 0, 0}
+	r.orientation = quaternion.T{0, 0, 0, 1}
+	r.angularVelocity = vec3.T{0, 0, 0}
+	r.angularMomentum = vec3.T{0, 0, 0}
 }
