@@ -23,7 +23,7 @@ function motor:set_speed(s)
 end
 
 function motor:send_speed()
-    udp.send("#" .. tostring(self.n - 1) .."m" .. tostring(self.speed) .. "!\n")
+    udp.send("#motor," .. tostring(self.n - 1) .. "," .. tostring(self.speed) .. "!")
 end
 
 function motor:update()
