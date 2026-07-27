@@ -361,13 +361,13 @@ func (r *ROV) DisplayMatrix() {
 	}
 
 	fmt.Print("A = np.array([")
-	for i := range 5 {
-		if i != 0 {
+	for j := range 6 {
+		if j != 0 {
 			fmt.Print(", ")
 		}
 		fmt.Print("[")
-		for j := range 6 {
-			if j != 0 {
+		for i := range 5 {
+			if i != 0 {
 				fmt.Print(", ")
 			}
 			fmt.Print(mat[j][i])
