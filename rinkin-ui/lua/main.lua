@@ -162,12 +162,21 @@ function loop()
 		gamepad_enabled = ImGui.Checkbox("Gamepad activé", gamepad_enabled)
 
 		if gamepad_enabled then
-			motors[1]:set_speed(round((axis(1) + axis(4) - axis(5)) * 9))
-			motors[2]:set_speed(round((-axis(3) + axis(0)) * 9))
-			motors[3]:set_speed(round((-axis(3) - axis(0)) * 9))
-			motors[4]:set_speed(round((-axis(1) + axis(4) - axis(5)) * 9))
-			motors[5]:set_speed(round((-axis(1) + axis(4) - axis(5)) * 9))
+			--motors[1]:set_speed(round((axis(1) + axis(4) - axis(5)) * 9))
+			--motors[2]:set_speed(round((-axis(3) + axis(0)) * 9))
+			--motors[3]:set_speed(round((-axis(3) - axis(0)) * 9))
+			--motors[4]:set_speed(round((-axis(1) + axis(4) - axis(5)) * 9))
+			--motors[5]:set_speed(round((-axis(1) + axis(4) - axis(5)) * 9))
+			if gamepad.get_button_pressed() == 15 then
+				udp.send("#reset!")
+			end
+			udp.send("#setpoint,1," .. tostring(axis(4) - axis(5)) .. "!")
+			udp.send("#setpoint,2," .. tostring(-10*axis(3)) .. "!")
+			udp.send("#setpoint,3," .. tostring(-axis(1)) .. "!")
+			udp.send("#setpoint,4," .. tostring(axis(0)) .. "!")
 		end
+
+		
 
 		for _, m in ipairs(motors) do
 			m:slider()

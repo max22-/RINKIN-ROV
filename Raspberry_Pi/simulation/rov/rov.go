@@ -52,6 +52,8 @@ type ROV struct {
 	dt                        time.Duration
 	momentOfInertia           vec3.T
 	sumOfForces, sumOfTorques vec3.T
+	setpoint                  [6]float32
+	mixerMatrix               [5][6]float32
 	started                   bool
 }
 
@@ -81,7 +83,16 @@ func New() *ROV {
 		momentOfInertia:  vec3.T{1, 1, 1},
 		sumOfForces:      vec3.T{0, 0, 0},
 		sumOfTorques:     vec3.T{0, 0, 0},
-		started:          false,
+		setpoint:         [6]float32{0, 0, 0, 0, 0, 0},
+		mixerMatrix: [5][6]float32{
+			{-0., 0.337, 0., -2.882, 0., 0.},
+			{-0., -0., 0.5, 0., 4.167, 0.},
+			{-0., -0., 0.5, 0., -4.167, -0.},
+			{0., 0.331, 0., 1.441, 0., -4.167},
+			{0., 0.331, 0., 1.441, 0., 4.167},
+		},
+
+		started: false,
 	}
 	return r
 }
@@ -232,8 +243,28 @@ func (r *ROV) runCmd(cmd string) {
 		}
 		speed := args[1]
 		r.motors[motor].speed = speed
+	case "setpoint":
+		if len(args) != 2 {
+			fmt.Fprintf(os.Stderr, "setpoint: invalid number of arguments")
+			return
+		}
+		axis := int(args[0])
+		if axis < 0 || axis >= len(r.setpoint) {
+			fmt.Fprintf(os.Stderr, "setpoint: invalid axis")
+		}
+		r.setpoint[axis] = args[1]
+		r.updateMotors()
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmdName)
+	}
+}
+
+func (r *ROV) updateMotors() {
+	for j := range len(r.motors) {
+		r.motors[j].speed = 0
+		for i := range len(r.setpoint) {
+			r.motors[j].speed += r.mixerMatrix[j][i] * r.setpoint[i]
+		}
 	}
 }
 
