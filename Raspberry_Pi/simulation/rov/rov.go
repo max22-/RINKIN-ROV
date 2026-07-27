@@ -167,10 +167,6 @@ func (r *ROV) loop() {
 		r.orientation.Normalize()
 
 		r.sendInfo()
-		//fmt.Println("position: ", r.position)
-		//fmt.Println("velocity: ", r.velocity)
-		//fmt.Println("quaternion: ", r.orientation)
-		//fmt.Println("angular momentum: ", r.angularMomentum)
 		time.Sleep(1 * r.dt)
 	}
 }
