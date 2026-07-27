@@ -1,11 +1,12 @@
 package rov
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
-	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ungerik/go3d/quaternion"
@@ -195,30 +196,48 @@ func (r *ROV) bodyPointToWorld(p vec3.T) vec3.T {
 	return rp.Added(&r.position)
 }
 
-func (r *ROV) runCmd(cmd string) {
-	if cmd == "#reset!\n" {
-		r.reset()
+func parseCmd(cmd string) (string, []float32, error) {
+	if len(cmd) < 3 || cmd[0] != '#' || cmd[len(cmd)-1] != '!' {
+		return "", nil, errors.New("invalid command")
 	}
-	regex, _ := regexp.Compile(`#(\d+)m(-?\d+)!\n`)
-
-	l := regex.FindStringSubmatch(cmd)
-	if l == nil {
-		fmt.Fprintln(os.Stderr, "received invalid command: ", cmd)
-	}
-	fmt.Println(l)
-	if len(l) == 3 {
-		motor, err := strconv.Atoi(l[1])
-		if err != nil || motor < 0 || motor >= len(r.motors) {
-			fmt.Fprintln(os.Stderr, "invalid motor")
-			return
-		}
-		speed, err := strconv.Atoi(l[2])
+	cmd = cmd[1 : len(cmd)-1]
+	parts := strings.Split(cmd, ",")
+	name := parts[0]
+	args := make([]float32, len(parts)-1)
+	for i, p := range parts[1:] {
+		arg, err := strconv.ParseFloat(p, 32)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "invalid motor speed")
+			return "", nil, errors.New("invalid command")
+		}
+		args[i] = float32(arg)
+	}
+	return name, args, nil
+}
+
+func (r *ROV) runCmd(cmd string) {
+	cmdName, args, err := parseCmd(cmd)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		return
+	}
+
+	switch cmdName {
+	case "reset":
+		r.reset()
+	case "motor":
+		if len(args) != 2 {
+			fmt.Fprintf(os.Stderr, "motor: invalid number of arguments")
 			return
 		}
-		r.motors[motor].speed = float32(speed)
-		fmt.Printf("motor=%d speed = %d\n", motor, speed)
+		motor := int(args[0])
+		if motor < 0 || motor >= len(r.motors) {
+			fmt.Fprintf(os.Stderr, "invalid motor")
+			return
+		}
+		speed := args[1]
+		r.motors[motor].speed = speed
+	default:
+		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmdName)
 	}
 }
 
