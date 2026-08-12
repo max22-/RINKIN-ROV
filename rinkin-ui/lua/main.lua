@@ -170,10 +170,11 @@ function loop()
 			if gamepad.get_button_pressed() == 15 then
 				udp.send("#reset!")
 			end
-			udp.send("#setpoint,1," .. tostring(axis(4) - axis(5)) .. "!")
+			udp.send("#setpoint,1," .. tostring(5*axis(4) - 5*axis(5)) .. "!")
 			udp.send("#setpoint,2," .. tostring(-10*axis(3)) .. "!")
-			udp.send("#setpoint,3," .. tostring(-axis(1)) .. "!")
-			udp.send("#setpoint,4," .. tostring(axis(0)) .. "!")
+			udp.send("#setpoint,3," .. tostring(-5*axis(1)) .. "!")
+			udp.send("#setpoint,4," .. tostring(5*axis(0)) .. "!")
+			udp.send("#setpoint,5," .. tostring(-5*axis(2)) .. "!")
 		end
 
 		
