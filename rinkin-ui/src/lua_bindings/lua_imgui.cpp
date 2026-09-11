@@ -132,6 +132,15 @@ static int lua_imgui_button(lua_State *L) {
     return 1;
 }
 
+static int lua_imgui_input_int(lua_State *L) {
+    const char *label = luaL_checkstring(L, 1);
+    int i = luaL_checkinteger(L, 2);
+    bool res = ImGui::InputInt(label, &i);
+    lua_pushinteger(L, i);
+    lua_pushboolean(L, res);
+    return 2;
+}
+
 static int lua_imgui_input_double(lua_State *L) {
     const char *label = luaL_checkstring(L, 1);
     double v = luaL_checknumber(L, 2);
@@ -184,6 +193,29 @@ static int lua_imgui_separator_text(lua_State *L) {
     return 0;
 }
 
+static int lua_imgui_begin_tab_bar(lua_State *L) {
+    const char *label = luaL_checkstring(L, 1);
+    const ImGuiTabBarFlags flags = luaL_optinteger(L, 2, ImGuiTabBarFlags_None);
+    lua_pushboolean(L, ImGui::BeginTabBar(label, flags));
+    return 1;
+}
+
+static int lua_imgui_end_tab_bar(lua_State *L) {
+    ImGui::EndTabBar();
+    return 0;
+}
+
+static int lua_imgui_begin_tab_item(lua_State *L) {
+    const char *label = luaL_checkstring(L, 1);
+    lua_pushboolean(L, ImGui::BeginTabItem(label));
+    return 1;
+}
+
+static int lua_imgui_end_tab_item(lua_State *L) {
+    ImGui::EndTabItem();
+    return 0;
+}
+
 int lua_open_imgui(lua_State *L) {
     const struct luaL_Reg ImGuiLib[] = {
         {"Begin", lua_imgui_begin},
@@ -200,12 +232,17 @@ int lua_open_imgui(lua_State *L) {
         {"Text", lua_imgui_text},
         {"InputText", lua_imgui_input_text},
         {"Button", lua_imgui_button},
+        {"InputInt", lua_imgui_input_int},
         {"InputDouble", lua_imgui_input_double},
         {"SliderInt", lua_imgui_slider_int},
         {"SliderFloat", lua_imgui_slider_float},
         {"Checkbox", lua_imgui_checkbox},
         {"SameLine", lua_imgui_sameline},
         {"SeparatorText", lua_imgui_separator_text},
+        {"BeginTabBar", lua_imgui_begin_tab_bar},
+        {"EndTabBar", lua_imgui_end_tab_bar},
+        {"BeginTabItem", lua_imgui_begin_tab_item},
+        {"EndTabItem", lua_imgui_end_tab_item},
         {nullptr, nullptr},
     };
     luaL_newlib(L, ImGuiLib);
