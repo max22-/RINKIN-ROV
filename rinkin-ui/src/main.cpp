@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef PLATFORM_ANDROID
+#include <android/asset_manager.h>
+#include "raymob.h"
+#endif
 #include <raylib.h>
 #include <raymath.h>
 #define RLIGHTS_IMPLEMENTATION
@@ -15,7 +19,11 @@
 #include "windows_fix.h"
 
 #ifndef GLSL_VERSION
+#ifdef PLATFORM_ANDROID
+#define GLSL_VERSION            300
+#else
 #define GLSL_VERSION            330
+#endif
 #endif
 
 #if GLSL_VERSION == 330
@@ -24,6 +32,9 @@
 #elif GLSL_VERSION == 120
 #include "shaders/glsl120/lighting.vs.h"
 #include "shaders/glsl120/lighting.fs.h"
+#elif GLSL_VERSION == 300
+#include "shaders/gles300/lighting.vs.h"
+#include "shaders/gles300/lighting.fs.h"
 #else
 #error "Invalid GLSL version"
 #endif
@@ -32,6 +43,46 @@
 
 float heading = 0.0f, pitch = 0.0f, roll = 0.0f;
 RenderTexture2D model_texture;
+
+#ifdef PLATFORM_ANDROID
+
+static void create_storage_dir(const char* folder) {
+    char* storagePath = GetAppStoragePath();
+    if (storagePath) {
+        char fullPath[512];
+        snprintf(fullPath, sizeof(fullPath), "%s/%s", storagePath, folder);
+        mkdir(fullPath, 0770);
+        free(storagePath);
+    }
+}
+
+static void copy_lua_scripts() {
+    create_storage_dir("lua");
+
+    struct android_app* app = GetAndroidApp();
+    if (!app || !app->activity || !app->activity->assetManager) return;
+
+    AAssetManager* assetManager = app->activity->assetManager;
+    AAssetDir* assetDir = AAssetManager_openDir(assetManager, "lua");
+
+    if (assetDir) {
+        const char* fileName = NULL;
+        while ((fileName = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            char assetPath[512];
+            snprintf(assetPath, sizeof(assetPath), "lua/%s", fileName);
+
+            int dataSize = 0;
+            unsigned char* data = LoadFileData(assetPath, &dataSize);
+            if (data) {
+                WriteToAppStorage(assetPath, data, (unsigned int)dataSize);
+                UnloadFileData(data);
+                TraceLog(LOG_INFO, "LUA: Synced %s to internal storage", assetPath);
+            }
+        }
+        AAssetDir_close(assetDir);
+    }
+}
+#endif
 
 void lua_simple_fcall(lua_State *L, const char *fname) {
 	lua_getglobal(L, fname);
@@ -50,6 +101,23 @@ lua_State *lua_start(lua_State *L) {
 	luaL_openlibs(L);
 	lua_register_bindings(L);
 
+#ifdef PLATFORM_ANDROID
+	copy_lua_scripts();
+	char* storagePath = GetAppStoragePath();
+	if (storagePath) {
+		char ppath[512];
+		snprintf(ppath, sizeof(ppath), "package.path = '%s/lua/?.lua;' .. package.path", storagePath);
+		luaL_dostring(L, ppath);
+
+		char mainPath[512];
+		snprintf(mainPath, sizeof(mainPath), "%s/lua/main.lua", storagePath);
+		int res = luaL_dofile(L, mainPath);
+		if(res != LUA_OK) {
+			fprintf(stderr, "LUA ERROR: %s\n", lua_tostring(L, -1));
+		}
+		free(storagePath);
+	}
+#else
 	if(luaL_dostring(L, "package.path = './lua/?.lua;' .. package.path") != LUA_OK) {
 		fprintf(stderr, "%s\n", lua_tostring(L, -1));
 		lua_close(L);
@@ -61,6 +129,7 @@ lua_State *lua_start(lua_State *L) {
 		fprintf(stderr, "%s\n", lua_tostring(L, -1));
 		lua_settop(L, 0);
 	}
+#endif
 	lua_simple_fcall(L, "setup");
 
 	return L;
@@ -74,16 +143,25 @@ int main(int argc, char* argv[]) {
 	printf("GLSL_VERSION=%d\n", GLSL_VERSION);
 	printf("%.*s\n", lighting_fs_len, lighting_fs);
 	
-	
+	#ifdef __ANDROID__
+	SetConfigFlags(FLAG_FULLSCREEN_MODE);
+	InitWindow(GetScreenWidth(), GetScreenHeight(), "Rinkin");
+	#else	
 	int screenWidth = 1280;
 	int screenHeight = 800;
 
 	SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
 	InitWindow(screenWidth, screenHeight, "Rinkin");
+	#endif
 	SetTargetFPS(60);
 	rlImGuiSetup(true);
 	ImGui::StyleColorsLight();
 	ImPlot::CreateContext();
+
+	#ifdef __ANDROID__
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.ScrollbarSize = 40.0f;
+	#endif
 	
 
 	Camera camera = { 0 };

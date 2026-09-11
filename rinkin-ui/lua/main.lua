@@ -61,7 +61,7 @@ function loop()
 
     ImGui.SetNextWindowPos(0, 0)
     ImGui.SetNextWindowSize(ImGui.GetViewportSize())
-    if ImGui.Begin("Rinkin") then
+    if ImGui.Begin("Rinkin", ImGui.WindowFlags.HorizontalScrollbar) then
         ImGui.BeginGroup("Video")
             ImGui.Text("Vidéo")
             v:display()
@@ -138,7 +138,7 @@ function loop()
             m:slider()
         end
 
-        if plot.Begin("Vitesse moteur##plot", 320, 240) then
+        if plot.Begin("Vitesse moteur##plot", 640, 480) then
             plot.x_axis_limits(0, 1000, "always")
             plot.y_axis_limits(-9, 9, "always")
             for _, m in ipairs(motors) do
@@ -161,7 +161,7 @@ function loop()
         ImGui.EndChild()
 ]]--
         ImGui.SameLine()
-        if plot.Begin("IMU", 320, 240) then
+        if plot.Begin("IMU", 640, 480) then
             plot.x_axis_limits(0, 1000, "always")
             plot.y_axis_limits(0, 360)
             heading:display()
@@ -173,7 +173,7 @@ function loop()
         ImGui.SameLine()
 
         if gamepad.is_available(0) then
-            if ImGui.BeginChild("Gamepad", 320, 240) then
+            if ImGui.BeginChild("Gamepad", 640, 480) then
                 ImGui.Text(gamepad.get_name(0))
                 local axis_count = gamepad.get_axis_count(0)
                 for i = 0, axis_count - 1 do

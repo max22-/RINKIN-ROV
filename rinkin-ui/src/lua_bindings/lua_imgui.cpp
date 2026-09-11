@@ -3,7 +3,8 @@
 
 static int lua_imgui_begin(lua_State *L) {
     const char *title = luaL_checkstring(L, 1);
-    lua_pushboolean(L, ImGui::Begin(title));
+    const int flags = luaL_optinteger(L, 2, 0);
+    lua_pushboolean(L, ImGui::Begin(title, nullptr, flags));
     return 1;
 }
 
@@ -196,5 +197,11 @@ int lua_open_imgui(lua_State *L) {
         {nullptr, nullptr},
     };
     luaL_newlib(L, ImGuiLib);
+    lua_pushstring(L, "WindowFlags");
+    lua_createtable(L, 0, 0);
+    lua_pushstring(L, "HorizontalScrollbar");
+    lua_pushinteger(L, ImGuiWindowFlags_HorizontalScrollbar);
+    lua_settable(L, -3);
+    lua_settable(L, -3);
     return 1;
 }
