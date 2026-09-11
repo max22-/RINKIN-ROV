@@ -16,6 +16,7 @@ for i = 1, 5 do
 end
 local battery = 0.0
 local gamepad_enabled = true
+local amplitude = 9
 
 function setup()
     v = video.new("rtsp://" .. ip .. ":8554/cam", video_resolution.x, video_resolution.y)
@@ -62,131 +63,141 @@ function loop()
     ImGui.SetNextWindowPos(0, 0)
     ImGui.SetNextWindowSize(ImGui.GetViewportSize())
     if ImGui.Begin("Rinkin", ImGui.WindowFlags.HorizontalScrollbar) then
-        ImGui.BeginGroup("Video")
-            ImGui.Text("Vidéo")
-            v:display()
-            if ImGui.Button("Démarrer") then v:start() end
-            ImGui.SameLine()
-            if ImGui.Button("Arrêter") then v:stop() end
-            ImGui.SameLine()
-            if ImGui.Button("Capturer image") then
-                local image_name = os.date("%Y%m%d_%H%M%S") .. ".jpg"
-                v:capture_image(image_name)
-            end
-            ImGui.SameLine()
-            if not v:is_recording() then
-                if ImGui.Button("Enregistrer") then
-                    local video_name = os.date("%Y%m%d_%H%M%S") .. ".mp4"
-                    v:start_recording(video_name)
+        if ImGui.BeginTabBar("tab bar") then
+            if ImGui.BeginTabItem("Accueil") then
+                ImGui.BeginGroup("Video")
+                    ImGui.Text("Vidéo")
+                    v:display()
+                    if ImGui.Button("Démarrer") then v:start() end
+                    ImGui.SameLine()
+                    if ImGui.Button("Arrêter") then v:stop() end
+                    ImGui.SameLine()
+                    if ImGui.Button("Capturer image") then
+                        local image_name = os.date("%Y%m%d_%H%M%S") .. ".jpg"
+                        v:capture_image(image_name)
+                    end
+                    ImGui.SameLine()
+                    if not v:is_recording() then
+                        if ImGui.Button("Enregistrer") then
+                            local video_name = os.date("%Y%m%d_%H%M%S") .. ".mp4"
+                            v:start_recording(video_name)
+                        end
+                    else
+                        if ImGui.Button("Arrêter enregistrement") then
+                            v:stop_recording()
+                        end
+                    end
+
+                ImGui.EndGroup()
+                
+                ImGui.SameLine()
+                ImGui.BeginGroup()
+                    ImGui.Text("Modèle 3D")
+                    model.display()
+                ImGui.EndGroup()
+
+                ImGui.SeparatorText("Script")
+                if ImGui.Button("Allumer LED A") then
+                    udp.send("#0l1!\n")
                 end
-            else
-                if ImGui.Button("Arrêter enregistrement") then
-                    v:stop_recording()
+                ImGui.SameLine()
+                if ImGui.Button("Éteindre LED A") then
+                    udp.send("#0l0!\n")
                 end
-            end
-
-        ImGui.EndGroup()
-        
-        ImGui.SameLine()
-        ImGui.BeginGroup()
-            ImGui.Text("Modèle 3D")
-            model.display()
-        ImGui.EndGroup()
-
-        ImGui.SeparatorText("Script")
-        if ImGui.Button("Allumer LED A") then
-            udp.send("#0l1!\n")
-        end
-        ImGui.SameLine()
-        if ImGui.Button("Éteindre LED A") then
-            udp.send("#0l0!\n")
-        end
-        ImGui.SameLine()
-        if ImGui.Button("Allumer LED B") then
-            udp.send("#1l1!\n")
-        end
-        ImGui.SameLine()
-        if ImGui.Button("Éteindre LED B") then
-            udp.send("#1l0!\n")
-        end
-        ImGui.SameLine()
-        if ImGui.Button("Allumer Test") then
-            udp.send("#2l1!\n")
-        end
-        ImGui.SameLine()
-        if ImGui.Button("Eteindre Test") then
-            udp.send("#2l0!\n")
-        end
-        ImGui.SameLine()
-        if ImGui.Button("Batterie") then
-            udp.send("#0b0!\n")
-        end
-        ImGui.SameLine()
-        ImGui.Text(tostring(battery))
-
-        gamepad_enabled = ImGui.Checkbox("Gamepad activé", gamepad_enabled)
-
-        if(gamepad_enabled) then
-            motors[1]:set_speed(round((axis(1) + axis(4) - axis(5)) * 9))
-            motors[2]:set_speed(round((-axis(3) + axis(0)) * 9))
-            motors[3]:set_speed(round((-axis(3) - axis(0)) * 9))
-            motors[4]:set_speed(round((-axis(1) + axis(4) - axis(5)) * 9))
-            motors[5]:set_speed(round((-axis(1) + axis(4) - axis(5)) * 9))
-        end
-
-        for _, m in ipairs(motors) do
-            m:slider()
-        end
-
-        if plot.Begin("Vitesse moteur##plot", 640, 480) then
-            plot.x_axis_limits(0, 1000, "always")
-            plot.y_axis_limits(-9, 9, "always")
-            for _, m in ipairs(motors) do
-                m:display_plot()
-            end
-            plot.End()
-        end
---[[
-        if ImGui.BeginChild("Script", 100, 100) then
-            if ImGui.Button("Recharger") then dofile("lua/main.lua") end
-            ImGui.Text(tostring(gamepad.get_axis_count(0)))
-        end
-        ImGui.EndChild()
-
-        ImGui.SeparatorText("Gamepad")
-
-        if ImGui.BeginChild("foo") then
-            ImGui.Text(tostring(gamepad.is_button_down(0, 11)))
-        end
-        ImGui.EndChild()
-]]--
-        ImGui.SameLine()
-        if plot.Begin("IMU", 640, 480) then
-            plot.x_axis_limits(0, 1000, "always")
-            plot.y_axis_limits(0, 360)
-            heading:display()
-            pitch:display()
-            roll:display()
-            plot.End()
-        end
-
-        ImGui.SameLine()
-
-        if gamepad.is_available(0) then
-            if ImGui.BeginChild("Gamepad", 640, 480) then
-                ImGui.Text(gamepad.get_name(0))
-                local axis_count = gamepad.get_axis_count(0)
-                for i = 0, axis_count - 1 do
-                    ImGui.PushID(i)
-                    --local val = gamepad.get_axis_movement(0, i)
-                    local val = axis(i)
-                    ImGui.InputDouble(tostring(i), val)
-                    ImGui.PopID();
+                ImGui.SameLine()
+                if ImGui.Button("Allumer LED B") then
+                    udp.send("#1l1!\n")
                 end
+                ImGui.SameLine()
+                if ImGui.Button("Éteindre LED B") then
+                    udp.send("#1l0!\n")
+                end
+                ImGui.SameLine()
+                if ImGui.Button("Allumer Test") then
+                    udp.send("#2l1!\n")
+                end
+                ImGui.SameLine()
+                if ImGui.Button("Eteindre Test") then
+                    udp.send("#2l0!\n")
+                end
+                ImGui.SameLine()
+                if ImGui.Button("Batterie") then
+                    udp.send("#0b0!\n")
+                end
+                ImGui.SameLine()
+                ImGui.Text(tostring(battery))
+
+                gamepad_enabled = ImGui.Checkbox("Gamepad activé", gamepad_enabled)
+
+                if(gamepad_enabled) then
+                    motors[1]:set_speed(round((axis(1) + axis(4) - axis(5)) * amplitude))
+                    motors[2]:set_speed(round((-axis(3) + axis(0)) * amplitude))
+                    motors[3]:set_speed(round((-axis(3) - axis(0)) * amplitude))
+                    motors[4]:set_speed(round((-axis(1) + axis(4) - axis(5)) * amplitude))
+                    motors[5]:set_speed(round((-axis(1) + axis(4) - axis(5)) * amplitude))
+                end
+
+                for _, m in ipairs(motors) do
+                    m:slider()
+                end
+
+                if plot.Begin("Vitesse moteur##plot", 640, 480) then
+                    plot.x_axis_limits(0, 1000, "always")
+                    plot.y_axis_limits(-amplitude, amplitude, "always")
+                    for _, m in ipairs(motors) do
+                        m:display_plot()
+                    end
+                    plot.End()
+                end
+        --[[
+                if ImGui.BeginChild("Script", 100, 100) then
+                    if ImGui.Button("Recharger") then dofile("lua/main.lua") end
+                    ImGui.Text(tostring(gamepad.get_axis_count(0)))
+                end
+                ImGui.EndChild()
+
+                ImGui.SeparatorText("Gamepad")
+
+                if ImGui.BeginChild("foo") then
+                    ImGui.Text(tostring(gamepad.is_button_down(0, 11)))
+                end
+                ImGui.EndChild()
+        ]]--
+                ImGui.SameLine()
+                if plot.Begin("IMU", 640, 480) then
+                    plot.x_axis_limits(0, 1000, "always")
+                    plot.y_axis_limits(0, 360)
+                    heading:display()
+                    pitch:display()
+                    roll:display()
+                    plot.End()
+                end
+
+                ImGui.SameLine()
+
+                if gamepad.is_available(0) then
+                    if ImGui.BeginChild("Gamepad", 640, 480) then
+                        ImGui.Text(gamepad.get_name(0))
+                        local axis_count = gamepad.get_axis_count(0)
+                        for i = 0, axis_count - 1 do
+                            ImGui.PushID(i)
+                            --local val = gamepad.get_axis_movement(0, i)
+                            local val = axis(i)
+                            ImGui.InputDouble(tostring(i), val)
+                            ImGui.PopID();
+                        end
+                    end
+                    ImGui.EndChild()
+                end
+                ImGui.EndTabItem()
             end
-            ImGui.EndChild()
+            if ImGui.BeginTabItem("Config") then
+                ip = ImGui.InputText("IP", ip)
+                amplitude = ImGui.InputInt("amplitude", amplitude)
+                ImGui.EndTabItem()
+            end
+            ImGui.EndTabBar()
         end
-        
     end
     ImGui.End()
 end
