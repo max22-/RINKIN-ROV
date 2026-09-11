@@ -115,6 +115,17 @@ static int lua_imgui_text(lua_State *L) {
     return 0;
 }
 
+static int lua_imgui_input_text(lua_State *L) {
+    const char *label = luaL_checkstring(L, 1);
+    const char *text = luaL_checkstring(L, 2);
+    char buffer[1024];
+    snprintf(buffer, sizeof(buffer), "%s", text);
+    bool res = ImGui::InputText(label, buffer, sizeof(buffer));
+    lua_pushstring(L, buffer);
+    lua_pushboolean(L, res);
+    return 2;
+}
+
 static int lua_imgui_button(lua_State *L) {
     const char *label = luaL_checkstring(L, 1);
     lua_pushboolean(L, ImGui::Button(label));
@@ -187,6 +198,7 @@ int lua_open_imgui(lua_State *L) {
         {"SetNextWindowSize", lua_imgui_set_next_window_size},
         {"GetViewportSize", lua_imgui_get_viewport_size},
         {"Text", lua_imgui_text},
+        {"InputText", lua_imgui_input_text},
         {"Button", lua_imgui_button},
         {"InputDouble", lua_imgui_input_double},
         {"SliderInt", lua_imgui_slider_int},
