@@ -64,7 +64,7 @@ static int lua_imgui_push_id(lua_State *L) {
         break;
     }
     case LUA_TTABLE:
-        luaL_argerror(L, 1, "can't use floating tables with PushID");
+        luaL_argerror(L, 1, "can't use tables with PushID");
         break;
     case LUA_TFUNCTION:
         luaL_argerror(L, 1, "can't use functions with PushID");
