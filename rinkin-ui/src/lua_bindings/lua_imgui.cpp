@@ -1,5 +1,6 @@
 #include <imgui.h>
 #include "lua_imgui.h"
+#include "../virtual_joystick.h"
 
 static int lua_imgui_begin(lua_State *L) {
     const char *title = luaL_checkstring(L, 1);
@@ -216,6 +217,18 @@ static int lua_imgui_end_tab_item(lua_State *L) {
     return 0;
 }
 
+static int lua_imgui_virtual_joystick(lua_State *L) {
+    const char *label = luaL_checkstring(L, 1);
+    float x = luaL_checknumber(L, 2);
+    float y = luaL_checknumber(L, 3);
+    const float d = luaL_checknumber(L, 4);
+    bool res = ImGui::VirtualJoystick(label, &x, &y, d);
+    lua_pushnumber(L, x);
+    lua_pushnumber(L, y);
+    lua_pushboolean(L, res);
+    return 3;
+}
+
 int lua_open_imgui(lua_State *L) {
     const struct luaL_Reg ImGuiLib[] = {
         {"Begin", lua_imgui_begin},
@@ -243,6 +256,7 @@ int lua_open_imgui(lua_State *L) {
         {"EndTabBar", lua_imgui_end_tab_bar},
         {"BeginTabItem", lua_imgui_begin_tab_item},
         {"EndTabItem", lua_imgui_end_tab_item},
+        {"VirtualJoystick", lua_imgui_virtual_joystick},
         {nullptr, nullptr},
     };
     luaL_newlib(L, ImGuiLib);

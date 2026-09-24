@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef PLATFORM_ANDROID
+#include <sys/stat.h>
 #include <android/asset_manager.h>
 #include "raymob.h"
 #endif
@@ -170,6 +171,8 @@ int main(int argc, char* argv[]) {
     camera.up = (Vector3){ 0.0f, -1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 30.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera type
+
+	TraceLog(LOG_INFO, "shader: %.s\n", lighting_fs_len, lighting_fs);
 
 	Shader shader = LoadShaderFromMemory((const char*)lighting_vs, (const char*)lighting_fs);
 	shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");

@@ -18,6 +18,13 @@ local battery = 0.0
 local gamepad_enabled = true
 local amplitude = 9
 
+local j1x = 0
+local j1y = 0
+local j2x = 0
+local j2y = 0
+
+local updown = 0
+
 function setup()
     v = video.new("rtsp://" .. ip .. ":8554/cam", video_resolution.x, video_resolution.y)
     --v = video.new("http://www.windsurfbreizh22.com/webcamHD/webcam-rosaires/video.php", video_resolution.x, video_resolution.y)
@@ -173,9 +180,8 @@ function loop()
                     plot.End()
                 end
 
-                ImGui.SameLine()
-
                 if gamepad.is_available(0) then
+                    ImGui.SameLine()
                     if ImGui.BeginChild("Gamepad", 640, 480) then
                         ImGui.Text(gamepad.get_name(0))
                         local axis_count = gamepad.get_axis_count(0)
@@ -189,6 +195,28 @@ function loop()
                     end
                     ImGui.EndChild()
                 end
+
+                local modified
+                updown, modified = ImGui.SliderInt("Haut/Bas", updown, -amplitude, amplitude)
+                if modified then
+                    motors[1]:set_speed(updown)
+                    motors[4]:set_speed(updown)
+                    motors[5]:set_speed(updown)
+                end
+                if ImGui.Button("Stop") then
+                    updown = 0
+                    motors[1]:set_speed(0)
+                    motors[4]:set_speed(0)
+                    motors[5]:set_speed(0)
+                end
+
+                --local active
+                --j1x, j1y, active = ImGui.VirtualJoystick("j1", j1x, j1y, 200)
+                --ImGui.SameLine()
+                --j2x, j2y = ImGui.VirtualJoystick("j2", j2x, j2y, 200)
+                --if active then
+                --    ImGui.Text("Active")
+                --end
                 ImGui.EndTabItem()
             end
             if ImGui.BeginTabItem("Config") then
