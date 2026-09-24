@@ -1,0 +1,1 @@
+void android_soft_keyboard();

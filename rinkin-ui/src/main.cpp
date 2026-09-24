@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <android/asset_manager.h>
 #include "raymob.h"
+#include "android_soft_keyboard.h"
 #endif
 #include <raylib.h>
 #include <raymath.h>
@@ -190,14 +191,22 @@ int main(int argc, char* argv[]) {
     	model.materials[i].shader = shader;
 	}
 
+
+
 	lua_State *L = lua_start(NULL);
 	if(L == NULL) goto cleanup;
+
 
 	while (!WindowShouldClose()) {
 		if(IsKeyPressed(KEY_F5)) {
 			L = lua_start(L);
 		}
 		lua_udp_callback(L);
+
+		#ifdef __ANDROID__
+		android_soft_keyboard();
+		#endif
+			
 
 		//UpdateCamera(&camera, CAMERA_ORBITAL);
 		float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
@@ -233,6 +242,7 @@ int main(int argc, char* argv[]) {
 			lua_simple_fcall(L, "loop");
 
 			rlImGuiEnd();
+			DrawFPS(100, 100);
 		}
 		EndDrawing();
 	}
