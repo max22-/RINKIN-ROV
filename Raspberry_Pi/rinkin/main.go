@@ -36,7 +36,7 @@ func main() {
 	}
 
 	mode := &serial.Mode{
-		BaudRate: 115200,
+		BaudRate: 9600,
 		DataBits: 8,
 		Parity:   serial.NoParity,
 		StopBits: serial.OneStopBit,
