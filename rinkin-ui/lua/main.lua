@@ -237,6 +237,13 @@ function loop()
             if ImGui.BeginTabItem("Config") then
                 ip = ImGui.InputText("IP", ip)
                 amplitude = ImGui.InputInt("amplitude", amplitude)
+                if ImGui.Button("Valider") then
+                    print("udp.close()")
+                    udp.close()
+                    udp.init(ip, 1234)
+                    v = nil
+                    v = video.new("rtsp://" .. ip .. ":8554/cam", video_resolution.x, video_resolution.y)
+                end
                 ImGui.EndTabItem()
             end
             ImGui.EndTabBar()
