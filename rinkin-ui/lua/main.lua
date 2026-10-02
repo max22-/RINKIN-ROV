@@ -16,7 +16,7 @@ for i = 1, 5 do
 end
 local battery = 0.0
 local gamepad_enabled = true
-local amplitude = 9
+amplitude = 9
 
 local j1x = 0
 local j1y = 0

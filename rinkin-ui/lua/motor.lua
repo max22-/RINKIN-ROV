@@ -17,7 +17,7 @@ end
 
 function motor:set_speed(s)
     if s ~= self.speed then
-        self.speed = clamp(s, -9, 9)
+        self.speed = clamp(s, -amplitude, amplitude)
         self:send_speed()
     end
 end
@@ -32,7 +32,7 @@ end
 
 function motor:slider()
     local modified
-    self.speed, modified = ImGui.SliderInt("Vitesse moteur " .. tostring(self.n), self.speed, -9, 9)
+    self.speed, modified = ImGui.SliderInt("Vitesse moteur " .. tostring(self.n), self.speed, -amplitude, amplitude)
     if modified then
         self:send_speed()
     end
