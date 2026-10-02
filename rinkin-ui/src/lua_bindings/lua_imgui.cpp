@@ -188,6 +188,11 @@ static int lua_imgui_sameline(lua_State *L) {
     return 0;
 }
 
+static int lua_imgui_separator(lua_State *L) {
+    ImGui::Separator();
+    return 0;
+}
+
 static int lua_imgui_separator_text(lua_State *L) {
     const char *label = luaL_checkstring(L, 1);
     ImGui::SeparatorText(label);
@@ -214,6 +219,29 @@ static int lua_imgui_begin_tab_item(lua_State *L) {
 
 static int lua_imgui_end_tab_item(lua_State *L) {
     ImGui::EndTabItem();
+    return 0;
+}
+
+static int lua_imgui_open_popup(lua_State *L) {
+    const char *label = luaL_checkstring(L, 1);
+    ImGui::OpenPopup(label);
+    return 0;
+}
+
+static int lua_imgui_begin_popup_modal(lua_State *L) {
+    const char *title = luaL_checkstring(L, 1);
+    bool res = ImGui::BeginPopupModal(title, nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    lua_pushboolean(L, res);
+    return 1;
+}
+
+static int lua_imgui_end_popup(lua_State *L) {
+    ImGui::EndPopup();
+    return 0;
+}
+
+static int lua_imgui_close_current_popup(lua_State *L) {
+    ImGui::CloseCurrentPopup();
     return 0;
 }
 
@@ -251,11 +279,16 @@ int lua_open_imgui(lua_State *L) {
         {"SliderFloat", lua_imgui_slider_float},
         {"Checkbox", lua_imgui_checkbox},
         {"SameLine", lua_imgui_sameline},
+        {"Separator", lua_imgui_separator},
         {"SeparatorText", lua_imgui_separator_text},
         {"BeginTabBar", lua_imgui_begin_tab_bar},
         {"EndTabBar", lua_imgui_end_tab_bar},
         {"BeginTabItem", lua_imgui_begin_tab_item},
         {"EndTabItem", lua_imgui_end_tab_item},
+        {"OpenPopup", lua_imgui_open_popup},
+        {"BeginPopupModal", lua_imgui_begin_popup_modal},
+        {"EndPopup", lua_imgui_end_popup},
+        {"CloseCurrentPopup", lua_imgui_close_current_popup},
         {"VirtualJoystick", lua_imgui_virtual_joystick},
         {nullptr, nullptr},
     };

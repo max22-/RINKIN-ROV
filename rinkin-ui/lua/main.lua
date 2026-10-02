@@ -25,6 +25,8 @@ local j2y = 0
 
 local updown = 0
 
+local err
+
 function setup()
     v = video.new("rtsp://" .. ip .. ":8554/cam", video_resolution.x, video_resolution.y)
     --v = video.new("http://www.windsurfbreizh22.com/webcamHD/webcam-rosaires/video.php", video_resolution.x, video_resolution.y)
@@ -75,7 +77,13 @@ function loop()
                 ImGui.BeginGroup("Video")
                     ImGui.Text("Vidéo")
                     v:display()
-                    if ImGui.Button("Démarrer") then v:start() end
+                    if ImGui.Button("Démarrer") then
+                        local status
+                        status, err = pcall(function() v:start() end)
+                        if status == false then
+                            ImGui.OpenPopup("Erreur vidéo")
+                        end
+                    end
                     ImGui.SameLine()
                     if ImGui.Button("Arrêter") then v:stop() end
                     ImGui.SameLine()
@@ -96,6 +104,13 @@ function loop()
                     end
 
                 ImGui.EndGroup()
+                if ImGui.BeginPopupModal("Erreur vidéo") then
+                        ImGui.Text(err or "nil")
+                        if ImGui.Button("OK") then
+                            ImGui.CloseCurrentPopup()
+                        end
+                        ImGui.EndPopup();
+                end
                 
                 ImGui.SameLine()
                 ImGui.BeginGroup()
