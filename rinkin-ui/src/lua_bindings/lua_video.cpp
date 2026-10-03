@@ -23,6 +23,7 @@ struct Video {
     std::string url;
     unsigned int width, height;
     Texture2D texture;
+    bool rotate = false;
     // FFmpeg stuff
     AVFormatContext *format_ctx = nullptr;
     AVStream *video_stream = nullptr;
@@ -226,6 +227,13 @@ int lua_video_stop(lua_State *L) {
     return 0;
 }
 
+int lua_video_rotate(lua_State *L) {
+    Video *v = checkvideo(L);
+    luaL_checktype(L, 2, LUA_TBOOLEAN);
+    v->rotate = lua_toboolean(L, 2);
+    return 0;
+}
+
 int lua_video_display(lua_State *L) {
     Video *v = checkvideo(L);
     if(v->is_running) {
@@ -233,7 +241,15 @@ int lua_video_display(lua_State *L) {
         UpdateTexture(v->texture, v->rgb_frame->data[0]);
         v->rgb_frame_mutex.unlock();
     }
-    rlImGuiImage((const Texture*)&v->texture);
+    ImVec2 uv0, uv1;
+    if(v->rotate) {
+        uv0 = ImVec2(1.0f, 1.0f);
+        uv1 = ImVec2(0.0f, 0.0f);
+    } else {
+        uv0 = ImVec2(0.0f, 0.0f);
+        uv1 = ImVec2(1.0f, 1.0f);
+    }
+    ImGui::Image(ImTextureID(v->texture.id), ImVec2(v->texture.width, v->texture.height), uv0, uv1);
     return 0;
 }
 
@@ -351,6 +367,7 @@ static const struct luaL_Reg video_lib[] = {
 static const struct luaL_Reg video_lib_m[] = {
     {"start", lua_video_start},
     {"stop", lua_video_stop},
+    {"rotate", lua_video_rotate},
     {"display", lua_video_display},
     {"capture_image", lua_capture_image},
     {"start_recording", lua_start_recording},

@@ -27,6 +27,8 @@ local updown = 0
 
 local err
 
+local video_rotation = false
+
 function setup()
     v = video.new("rtsp://" .. ip .. ":8554/cam", video_resolution.x, video_resolution.y)
     --v = video.new("http://www.windsurfbreizh22.com/webcamHD/webcam-rosaires/video.php", video_resolution.x, video_resolution.y)
@@ -102,6 +104,9 @@ function loop()
                             v:stop_recording()
                         end
                     end
+                    ImGui.SameLine()
+                    video_rotation = ImGui.Checkbox("Rotation", video_rotation)
+                    v:rotate(video_rotation)
 
                 ImGui.EndGroup()
                 if ImGui.BeginPopupModal("Erreur vidéo") then
