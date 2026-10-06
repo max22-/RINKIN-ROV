@@ -13,12 +13,12 @@
 #include <imgui.h>
 #include <rlImGui.h>
 #include <implot.h>
-#include <lua.hpp>
-#include "lua_bindings/lua_bindings.h"
-#include "lua_bindings/lua_udp.h"
 #include "config.h"
 #include "util.h"
 #include "windows_fix.h"
+#include "gui.h"
+#include "udp.h"
+#include "telemetry.h"
 
 #ifndef GLSL_VERSION
 #ifdef PLATFORM_ANDROID
@@ -40,8 +40,6 @@
 #else
 #error "Invalid GLSL version"
 #endif
-
-
 
 float heading = 0.0f, pitch = 0.0f, roll = 0.0f;
 RenderTexture2D model_texture;
@@ -86,58 +84,8 @@ static void copy_lua_scripts() {
 }
 #endif
 
-void lua_simple_fcall(lua_State *L, const char *fname) {
-	lua_getglobal(L, fname);
-	if(lua_isfunction(L, -1)) {
-		int res = lua_pcall(L, 0, 0, 0)	;
-		if(res != LUA_OK)
-			fprintf(stderr, "%s\n", lua_tostring(L, -1));
-	}
-	lua_settop(L, 0);
-}
-
-lua_State *lua_start(lua_State *L) {
-	if(L) lua_close(L);
-	L = luaL_newstate();
-	if(!L) FATAL("failed to initialize Lua");
-	luaL_openlibs(L);
-	lua_register_bindings(L);
-
-#ifdef PLATFORM_ANDROID
-	copy_lua_scripts();
-	char* storagePath = GetAppStoragePath();
-	if (storagePath) {
-		char ppath[512];
-		snprintf(ppath, sizeof(ppath), "package.path = '%s/lua/?.lua;' .. package.path", storagePath);
-		luaL_dostring(L, ppath);
-
-		char mainPath[512];
-		snprintf(mainPath, sizeof(mainPath), "%s/lua/main.lua", storagePath);
-		int res = luaL_dofile(L, mainPath);
-		if(res != LUA_OK) {
-			fprintf(stderr, "LUA ERROR: %s\n", lua_tostring(L, -1));
-		}
-		free(storagePath);
-	}
-#else
-	if(luaL_dostring(L, "package.path = './lua/?.lua;' .. package.path") != LUA_OK) {
-		fprintf(stderr, "%s\n", lua_tostring(L, -1));
-		lua_close(L);
-		return NULL;
-	}
-
-	int res = luaL_dofile(L, "lua/main.lua");
-	if(res != LUA_OK) {
-		fprintf(stderr, "%s\n", lua_tostring(L, -1));
-		lua_settop(L, 0);
-	}
-#endif
-	lua_simple_fcall(L, "setup");
-
-	return L;
-}
-
 int main(int argc, char* argv[]) {
+	load_config();
 	#ifdef _WIN32
 	windows_networking_init();
 	#endif
@@ -191,17 +139,15 @@ int main(int argc, char* argv[]) {
     	model.materials[i].shader = shader;
 	}
 
-
-
-	lua_State *L = lua_start(NULL);
-	if(L == NULL) goto cleanup;
-
+	Telemetry& telemetry = Telemetry::get_instance();
+	gui_init();
 
 	while (!WindowShouldClose()) {
-		if(IsKeyPressed(KEY_F5)) {
-			L = lua_start(L);
+		UDP& udp = UDP::get_instance();
+		if(udp.data_available()) {
+			std::string msg = udp.receive();
+			Telemetry::get_instance().handle_message(msg);
 		}
-		lua_udp_callback(L);
 
 		#ifdef __ANDROID__
 		android_soft_keyboard();
@@ -212,7 +158,7 @@ int main(int argc, char* argv[]) {
 		float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
 
-		model.transform = MatrixRotateXYZ((Vector3){roll, heading, pitch});
+		model.transform = MatrixRotateXYZ((Vector3){telemetry.get_roll(), telemetry.get_heading(), telemetry.get_pitch()});
 
 		BeginTextureMode(model_texture);
 		{
@@ -234,22 +180,14 @@ int main(int argc, char* argv[]) {
 		BeginDrawing();
 		{
 			ClearBackground(DARKGRAY);
-
-			DrawFPS(10, 10);
-
 			rlImGuiBegin();
-
-			lua_simple_fcall(L, "loop");
-
+			gui();
 			rlImGuiEnd();
-			DrawFPS(100, 100);
 		}
 		EndDrawing();
 	}
 
-cleanup:
-
-	if(L) lua_close(L);
+	gui_deinit();
 	UnloadShader(shader);
 	UnloadModel(model);
 	ImPlot::DestroyContext();
