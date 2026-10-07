@@ -175,7 +175,7 @@ for target_name, target in targets.items():
 
     for src, obj in zip(srcs, objs):
         #writer.build("build/debug/" + obj, "cpp_debug", src)
-        implicit = f"{ffmpeg_build_dir}/configure.stamp" if "lua_video.c" in src else None
+        implicit = f"{ffmpeg_build_dir}/configure.stamp" if "src/video.cpp" in src or "src/gui.cpp" in src else None
         writer.build(f"build/{target_name}/" + obj, f"cpp_release_{target_name}", src, implicit=implicit)
     #writer.build("bin/debug/rinkin", "link", ["build/debug/" + o for o in objs] + [libraylib_a, liblua_a] + lib_ffmpeg_a + [libz_a])
     writer.build(f"bin/{target_name}/{target['exe']}", f"link_{target_name}", [f"build/{target_name}/" + o for o in objs] + static_libs, variables={"ldflags": " ".join(target["ldflags"])})
