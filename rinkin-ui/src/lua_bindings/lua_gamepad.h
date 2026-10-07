@@ -1,1 +1,0 @@
-int lua_open_gamepad(struct lua_State *L);

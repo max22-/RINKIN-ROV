@@ -1,1 +1,0 @@
-void lua_register_bindings(struct lua_State *L);
