@@ -1,5 +1,8 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
+#ifdef _WIN32
+#include <external/fix_win32_compatibility.h>
+#endif
 #include <raylib.h>
 #include <rlImGui.h>
 #include "gui.h"

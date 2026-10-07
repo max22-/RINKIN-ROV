@@ -5,6 +5,9 @@
 #include "raymob.h"
 #include "android_soft_keyboard.h"
 #endif
+#ifdef _WIN32
+#include <external/fix_win32_compatibility.h>
+#endif
 #include <raylib.h>
 #include <raymath.h>
 #define RLIGHTS_IMPLEMENTATION
