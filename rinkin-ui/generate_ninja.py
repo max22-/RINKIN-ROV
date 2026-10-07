@@ -132,8 +132,7 @@ for target_name, target in targets.items():
     include_dirs = ["-I" + d for d in ["lib/imgui/", "lib/raylib/src", "lib/raylib/examples/shaders", "lib/rlImGui", "lib/lua-5.4.8/src", "lib/ffmpeg-8.0", ffmpeg_build_dir, "lib/implot"]]
     cpp_flags = ["-std=c++11", "-pedantic", "-Wall"] + include_dirs
     cpp_flags_debug = cpp_flags + ["-g"]
-    #cpp_flags_release = cpp_flags + ["-DNDEBUG", "-Os"]
-    cpp_flags_release = cpp_flags + ["-ggdb", "-O0"]
+    cpp_flags_release = cpp_flags + ["-DNDEBUG", "-Os"]
     #writer.variable("cpp_flags_debug", " ".join(cpp_flags_debug))
     writer.variable(f"cpp_flags_{target_name}", " ".join(cpp_flags_release))
 
