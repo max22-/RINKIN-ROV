@@ -9,6 +9,7 @@ public:
     float get_pitch();
     float get_roll();
     float get_battery();
+    void plot_imu(const ImVec2& size);
 private:
     Telemetry() : 
         heading_plot("heading", 1000), 

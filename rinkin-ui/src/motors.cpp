@@ -30,25 +30,20 @@ void Motors::sliders() {
 void Motors::slider(int n) {
     if(n < 0 || n >= MOTORS_COUNT) return;
     std::string label = std::string("Vitesse moteur ") + std::to_string(n);
-    int amplitude = config["moteurs"]["amplitude"].value_or(default_amplitude());
-    ImGui::SliderInt(label.c_str(), &speeds[n], -amplitude, amplitude);
+    ImGui::SliderInt(label.c_str(), &speeds[n], -config.motors_amplitude, config.motors_amplitude);
 }
 
 void Motors::plot(const ImVec2& size) {
-    ImPlot::BeginPlot("Vitesse moteurs", size);
-    ImPlot::SetupAxisLimits(ImAxis_X1, 0, 1000, ImGuiCond_Always);
-    int amplitude = config["moteurs"]["amplitude"].value_or(default_amplitude());
-    ImPlot::SetupAxisLimits(ImAxis_Y1, -amplitude, amplitude, ImGuiCond_Always);
-    for(int i = 0; i < MOTORS_COUNT; i++)
-        plots[i]->display();
-    ImPlot::EndPlot();
+    if(ImPlot::BeginPlot("Vitesse moteurs", size)) {
+        ImPlot::SetupAxisLimits(ImAxis_X1, 0, 1000, ImGuiCond_Always);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, -config.motors_amplitude, config.motors_amplitude, ImGuiCond_Always);
+        for(int i = 0; i < MOTORS_COUNT; i++)
+            plots[i]->display();
+        ImPlot::EndPlot();
+    }
 }
 
 void Motors::send_speed(int n) {
     if(n < 0 || n >= MOTORS_COUNT) return;
     UDP::get_instance().send(std::string("#") + std::to_string(n) + "m" + std::to_string(speeds[n]) + "!\n");
-}
-
-int Motors::default_amplitude() {
-    return 20;
 }

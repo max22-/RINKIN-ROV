@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #ifdef PLATFORM_ANDROID
 #include <sys/stat.h>
-#include <android/asset_manager.h>
 #include "raymob.h"
 #include "android_soft_keyboard.h"
 #endif
@@ -44,48 +43,8 @@
 float heading = 0.0f, pitch = 0.0f, roll = 0.0f;
 RenderTexture2D model_texture;
 
-#ifdef PLATFORM_ANDROID
-
-static void create_storage_dir(const char* folder) {
-    char* storagePath = GetAppStoragePath();
-    if (storagePath) {
-        char fullPath[512];
-        snprintf(fullPath, sizeof(fullPath), "%s/%s", storagePath, folder);
-        mkdir(fullPath, 0770);
-        free(storagePath);
-    }
-}
-
-static void copy_lua_scripts() {
-    create_storage_dir("lua");
-
-    struct android_app* app = GetAndroidApp();
-    if (!app || !app->activity || !app->activity->assetManager) return;
-
-    AAssetManager* assetManager = app->activity->assetManager;
-    AAssetDir* assetDir = AAssetManager_openDir(assetManager, "lua");
-
-    if (assetDir) {
-        const char* fileName = NULL;
-        while ((fileName = AAssetDir_getNextFileName(assetDir)) != NULL) {
-            char assetPath[512];
-            snprintf(assetPath, sizeof(assetPath), "lua/%s", fileName);
-
-            int dataSize = 0;
-            unsigned char* data = LoadFileData(assetPath, &dataSize);
-            if (data) {
-                WriteToAppStorage(assetPath, data, (unsigned int)dataSize);
-                UnloadFileData(data);
-                TraceLog(LOG_INFO, "LUA: Synced %s to internal storage", assetPath);
-            }
-        }
-        AAssetDir_close(assetDir);
-    }
-}
-#endif
-
 int main(int argc, char* argv[]) {
-	load_config();
+	config.load();
 	#ifdef _WIN32
 	windows_networking_init();
 	#endif

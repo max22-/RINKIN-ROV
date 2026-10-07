@@ -10,7 +10,6 @@
 #include "telemetry.h"
 
 Video *video = nullptr;
-static std::string ip;
 static int gamepad_num = 0;
 extern RenderTexture2D model_texture;
 static Motors motors;
@@ -21,9 +20,18 @@ static int gamepad_count() {
     return i;
 }
 
+static std::string video_url(std::string ip) {
+    return std::string("rtsp://") + ip + ":8554/cam";
+}
+
+static float axis(int i) {
+    float val = GetGamepadAxisMovement(gamepad_num, i);
+    if(i == 4 || i == 5) val = (val + 1) / 2;
+    return val;
+}
+
 void gui_init() {
-    ip = config["ip"].value_or("192.168.4.1");
-    video = new Video(std::string("rtsp://") + ip + ":8554/cam", 640, 480);
+    video = new Video(video_url(config.ip), 640, 480);
 }
 
 void gui_deinit() {
@@ -36,6 +44,11 @@ void gui() {
         udp.send("#0l1\n");
     } else if(IsGamepadButtonReleased(gamepad_num, 11)) {
         udp.send("#0l0!\n");
+    }
+
+    if(IsGamepadButtonPressed(gamepad_num, 6)) {
+        for(int i = 0; i < MOTORS_COUNT; i++)
+            motors.set_speed(i, 0);
     }
 
     ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -96,41 +109,47 @@ void gui() {
                 ImGui::Checkbox("Gamepad activé", &gamepad_enabled);
 
                 if(gamepad_enabled) {
-
+                    motors.set_speed(0, round((axis(1) + axis(4) - axis(5)) * config.motors_amplitude));
+                    motors.set_speed(1, round((-axis(3) + axis(0)) * config.motors_amplitude));
+                    motors.set_speed(2, round((-axis(3) - axis(0)) * config.motors_amplitude));
+                    motors.set_speed(3, round((-axis(1) + axis(4) - axis(5)) * config.motors_amplitude));
+                    motors.set_speed(4, round((-axis(1) + axis(4) - axis(5)) * config.motors_amplitude));
                 }
                 motors.update();
                 motors.sliders();
                 motors.plot(ImVec2(640, 480));
+
+                ImGui::SameLine();
+
+                Telemetry::get_instance().plot_imu(ImVec2(640, 480));
+
+                static int up_down = 0;
+                if(ImGui::SliderInt("Haut/Bas", &up_down, -config.motors_amplitude, config.motors_amplitude)) {
+                    motors.set_speed(0, up_down);
+                    motors.set_speed(3, up_down);
+                    motors.set_speed(4, up_down);
+                }
+                if(ImGui::Button("Stop")) {
+                    up_down = 0;
+                    motors.set_speed(0, 0);
+                    motors.set_speed(3, 0);
+                    motors.set_speed(4, 0);
+                }
 
                 ImGui::Text("%d FPS", GetFPS());
 
                 ImGui::EndTabItem();
             }
             if(ImGui::BeginTabItem("Config")) {
-                ImGui::InputText("IP", &ip);
+                ImGui::InputText("IP", &config.ip);
                 ImGui::SameLine();
                 if(ImGui::Button("Valider")) {
                     delete video;
-                    video = new Video(ip, 640, 480);
+                    video = new Video(video_url(config.ip), 640, 480);
                 }
-                int amplitude = config["moteurs"]["amplitude"].value_or(Motors::default_amplitude());
-                if(ImGui::InputInt("Amplitude moteurs", &amplitude)) {
-                    if(auto *motors = config["moteurs"].as_table()) {
-                        TraceLog(LOG_INFO, "before: amplitude = %d", (*motors)["amplitude"]);
-                        motors->insert_or_assign("amplitude", amplitude);
-                        TraceLog(LOG_INFO, "after: amplitude = %d", (*motors)["amplitude"]);
-                    } else {
-                        TraceLog(LOG_INFO, "no motors table");
-                    }
-                }
-                if(ImGui::Button("Sauvegarder")) {
-                    config.insert_or_assign("ip", ip);
-                    config.insert_or_assign("moteurs", toml::table());
-                    if(auto *motors = config["moteurs"].as_table()) {
-                        motors->insert_or_assign("amplitude", amplitude);
-                    }
-                    save_config();
-                }
+                ImGui::InputInt("Amplitude moteurs", &config.motors_amplitude);
+                if(ImGui::Button("Sauvegarder"))
+                    config.save();
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();

@@ -129,8 +129,8 @@ for target_name, target in targets.items():
     libz_a = zlib_build_dir + "/libz.a"
     static_libs = [libraylib_a, liblua_a] + lib_ffmpeg_a + [libz_a] # the order is important for ffmpeg and zlib
 
-    include_dirs = ["-I" + d for d in ["lib/imgui/", "lib/raylib/src", "lib/raylib/examples/shaders", "lib/rlImGui", "lib/lua-5.4.8/src", "lib/ffmpeg-8.0", ffmpeg_build_dir, "lib/implot", "lib/toml++"]]
-    cpp_flags = ["-std=c++17", "-pedantic", "-Wall"] + include_dirs
+    include_dirs = ["-I" + d for d in ["lib/imgui/", "lib/raylib/src", "lib/raylib/examples/shaders", "lib/rlImGui", "lib/lua-5.4.8/src", "lib/ffmpeg-8.0", ffmpeg_build_dir, "lib/implot"]]
+    cpp_flags = ["-std=c++11", "-pedantic", "-Wall"] + include_dirs
     cpp_flags_debug = cpp_flags + ["-g"]
     #cpp_flags_release = cpp_flags + ["-DNDEBUG", "-Os"]
     cpp_flags_release = cpp_flags + ["-ggdb", "-O0"]

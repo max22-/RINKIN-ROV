@@ -10,7 +10,6 @@ public:
     void sliders();
     void slider(int n);
     void plot(const ImVec2& size);
-    static int default_amplitude();
 
 private:
     void send_speed(int n);

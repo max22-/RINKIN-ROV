@@ -1,5 +1,7 @@
 #include <regex>
 #include <raylib.h>
+#include <imgui.h>
+#include <implot.h>
 
 #include "telemetry.h"
 
@@ -25,12 +27,15 @@ void Telemetry::handle_message(const std::string msg) {
             TraceLog(LOG_INFO, "command: %s, param: %f", command.c_str(), param);
             if(command == "heading") {
                 heading = DEG2RAD * param;
+                heading_plot.append(heading);
                 return;
             } else if(command == "pitch") {
                 pitch = DEG2RAD * param;
+                pitch_plot.append(pitch);
                 return;
             } else if(command == "roll") {
                 roll = DEG2RAD * param;
+                roll_plot.append(roll);
                 return;
             } else if(command == "battery") {
                 battery = (param * 3.3 /65535) / 0.234;
@@ -58,4 +63,15 @@ float Telemetry::get_roll() {
 
 float Telemetry::get_battery() {
     return battery;
+}
+
+void Telemetry::plot_imu(const ImVec2& size) {
+    if(ImPlot::BeginPlot("IMU", size)) {
+        ImPlot::SetupAxisLimits(ImAxis_X1, 0, 1000, ImGuiCond_Always);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 360, ImGuiCond_Always);
+        heading_plot.display();
+        pitch_plot.display();
+        roll_plot.display();
+        ImPlot::EndPlot();
+    }
 }

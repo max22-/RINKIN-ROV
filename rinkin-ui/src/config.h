@@ -1,6 +1,12 @@
-#include <toml.hpp>
+#include <string>
 
-void load_config();
-void save_config();
+class Config {
+public:
+    void load();
+    void save();
+    int motors_amplitude;
+    std::string ip;
+    std::string video_url_format;
+};
 
-extern toml::table config;
+extern Config config;
