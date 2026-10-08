@@ -58,13 +58,23 @@ int main(int argc, char* argv[]) {
 	#ifdef __ANDROID__
 	SetConfigFlags(FLAG_FULLSCREEN_MODE);
 	InitWindow(GetScreenWidth(), GetScreenHeight(), "Rinkin");
-	#else	
-	int screenWidth = 1280;
-	int screenHeight = 800;
+	#else
 
-	SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
-	InitWindow(screenWidth, screenHeight, "Rinkin");
+	int window_width = config.window_width;
+	int window_height = config.window_height;
+	unsigned int flags = FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT;
+	if(config.fullscreen) {
+		flags |= FLAG_FULLSCREEN_MODE;
+		window_width = GetScreenWidth();
+		window_height = GetScreenHeight();
+	}
+	if(config.high_dpi) flags |= FLAG_WINDOW_HIGHDPI;
+
+	SetConfigFlags(flags);
+	InitWindow(window_width, window_height, "Rinkin");
+	
 	#endif
+
 	SetTargetFPS(60);
 	rlImGuiSetup(true);
 	ImGui::StyleColorsLight();

@@ -6,7 +6,10 @@ public:
     void save();
     int motors_amplitude;
     std::string ip;
-    std::string video_url_format;
+    int window_width, window_height;
+    bool fullscreen;
+    bool high_dpi;
+    
 };
 
 extern Config config;
