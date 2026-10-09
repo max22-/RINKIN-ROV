@@ -159,7 +159,7 @@ void gui() {
             }
             if(ImGui::BeginTabItem("Manette")) {
                 if(IsGamepadAvailable(gamepad_num)) {
-                    ImGui::Text(GetGamepadName(gamepad_num));
+                    ImGui::Text("%s", GetGamepadName(gamepad_num));
                     const int n = GetGamepadAxisCount(gamepad_num);
                     for(int i = 0; i < n; i++) {
                         float v = axis(i);
