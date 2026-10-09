@@ -114,7 +114,7 @@ void gui() {
 
                 if(gamepad_enabled) {
                     motors.set_speed(0, round((axis(1) + axis(4) - axis(5)) * config.motors_amplitude));
-                    motors.set_speed(1, round((-axis(3) + axis(0)) * config.motors_amplitude));
+                    motors.set_speed(1, round((axis(3) + axis(0)) * config.motors_amplitude));
                     motors.set_speed(2, round((-axis(3) - axis(0)) * config.motors_amplitude));
                     motors.set_speed(3, round((-axis(1) + axis(4) - axis(5)) * config.motors_amplitude));
                     motors.set_speed(4, round((-axis(1) + axis(4) - axis(5)) * config.motors_amplitude));
