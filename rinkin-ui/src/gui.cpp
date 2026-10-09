@@ -155,6 +155,19 @@ void gui() {
                     config.save();
                 ImGui::EndTabItem();
             }
+            if(ImGui::BeginTabItem("Manette")) {
+                if(IsGamepadAvailable(gamepad_num)) {
+                    ImGui::Text(GetGamepadName(gamepad_num));
+                    const int n = GetGamepadAxisCount(gamepad_num);
+                    for(int i = 0; i < n; i++) {
+                        float v = axis(i);
+                        ImGui::SliderFloat(TextFormat("axe %d", i), &v, -1.0f, 1.0f);
+                    }
+                } else {
+                    ImGui::Text("Manette non disponible");
+                }
+                ImGui::EndTabItem();
+            }
             ImGui::EndTabBar();
         }
     }
