@@ -7,13 +7,23 @@
 #include <unistd.h>
 #endif
 #include "udp.h"
+#include "config.h"
 
 UDP& UDP::get_instance() {
-    static UDP instance("192.168.4.1", 1234);
+    static UDP instance(config.ip.c_str(), 1234);
     return instance;
 }
 
-UDP::UDP(const char *ip, uint16_t port) {
+UDP::UDP(const char *ip, uint16_t port) : port(port) {
+    reset(ip);
+}
+
+UDP::~UDP() {
+    closesocket(sock);
+}
+
+void UDP::reset(const char *ip) {
+    if(sock != -1) closesocket(sock);
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if(sock == -1) throw std::runtime_error("failed to create socket");
     memset(&in_addr, 0, sizeof(SOCKADDR_IN));
@@ -21,10 +31,6 @@ UDP::UDP(const char *ip, uint16_t port) {
         throw std::runtime_error("invalid ip address");
     in_addr.sin_family = AF_INET;
     in_addr.sin_port = htons(port);
-}
-
-UDP::~UDP() {
-    closesocket(sock);
 }
 
 bool UDP::send(const char *buf, size_t len) {

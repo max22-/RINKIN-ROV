@@ -15,6 +15,7 @@ typedef struct in_addr IN_ADDR;
 class UDP {
 public:
     static UDP& get_instance();
+    void reset(const char *ip);
     bool send(const char *buf, size_t len);
     bool send(const char *s);
     bool send(std::string s);
@@ -26,6 +27,7 @@ private:
     ~UDP();
     UDP(const UDP&) = delete;
     UDP& operator=(const UDP&) = delete;
-    SOCKET sock;
+    SOCKET sock = -1;
     SOCKADDR_IN in_addr;
+    const uint16_t port;
 };
