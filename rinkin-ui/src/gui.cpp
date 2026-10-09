@@ -150,6 +150,7 @@ void gui() {
                 if(ImGui::Button("Valider")) {
                     delete video;
                     video = new Video(video_url(config.ip), 640, 480);
+                    UDP::get_instance().reset(config.ip.c_str());
                 }
                 ImGui::InputInt("Amplitude moteurs", &config.motors_amplitude);
                 if(ImGui::Button("Sauvegarder"))
