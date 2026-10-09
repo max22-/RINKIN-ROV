@@ -28,6 +28,7 @@ static std::string video_url(std::string ip) {
 }
 
 static float axis(int i) {
+    if(!IsGamepadAvailable(gamepad_num)) return 0.0f;
     float val = GetGamepadAxisMovement(gamepad_num, i);
     if(i == 4 || i == 5) val = (val + 1) / 2;
     return val;
