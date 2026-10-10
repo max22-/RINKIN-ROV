@@ -35,7 +35,7 @@ static float axis(int i) {
 }
 
 void gui_init() {
-    video = new Video(video_url(config.ip), 640, 480);
+    video = new Video(video_url(config.host), 640, 480);
 }
 
 void gui_deinit() {
@@ -145,12 +145,12 @@ void gui() {
                 ImGui::EndTabItem();
             }
             if(ImGui::BeginTabItem("Config")) {
-                ImGui::InputText("IP", &config.ip);
+                ImGui::InputText("Adresse", &config.host);
                 ImGui::SameLine();
                 if(ImGui::Button("Valider")) {
                     delete video;
-                    video = new Video(video_url(config.ip), 640, 480);
-                    UDP::get_instance().reset(config.ip.c_str());
+                    video = new Video(video_url(config.host), 640, 480);
+                    UDP::get_instance().reset(config.host.c_str());
                 }
                 ImGui::InputInt("Amplitude moteurs", &config.motors_amplitude);
                 if(ImGui::Button("Sauvegarder"))

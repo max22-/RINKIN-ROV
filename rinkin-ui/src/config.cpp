@@ -8,10 +8,10 @@ Config config;
 
 void Config::load() {
     config.motors_amplitude = 20;
-    config.ip = "192.168.4.1";
+    config.host = "raspberrypi.local";
     config.window_width = 1280;
     config.window_height = 800;
-    config.fullscreen = true;
+    config.fullscreen = false;
     config.high_dpi = true;
     FILE *f = fopen("config.txt", "r");
     if(!f) return;
@@ -25,8 +25,8 @@ void Config::load() {
             value++;
             if(!strcmp(key, "motors_amplitude")) {
                 config.motors_amplitude = atoi(value);
-            } else if(!strcmp(key, "ip")) {
-                config.ip = value;
+            } else if(!strcmp(key, "host")) {
+                config.host = value;
             } else if(!strcmp(key, "window_width")) {
                 config.window_width = atoi(value);
             } else if(!strcmp(key, "window_height")) {
@@ -37,7 +37,7 @@ void Config::load() {
                 } else if(!strcmp(value, "false")) {
                     config.fullscreen = false;
                 } else {
-                    TraceLog(LOG_ERROR, "config.txt:%d: syntax error", i);
+                    TraceLog(LOG_ERROR, "config.txt:%d: syntax error (expected 'true' or 'false')", i);
                 }
             } else if(!strcmp(key, "high_dpi")) {
                 if(!strcmp(value, "true")) {
@@ -62,7 +62,7 @@ void Config::load() {
 void Config::save() {
     std::ofstream f("config.txt");
     f << "motors_amplitude=" << motors_amplitude << std::endl;
-    f << "ip=" << ip << std::endl;
+    f << "host=" << host << std::endl;
     f << "fullscreen=" << fullscreen << std::endl;
     f << "high_dpi=" << high_dpi << std::endl;
 }

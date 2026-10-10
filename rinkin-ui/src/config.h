@@ -5,7 +5,7 @@ public:
     void load();
     void save();
     int motors_amplitude;
-    std::string ip;
+    std::string host;
     int window_width, window_height;
     bool fullscreen;
     bool high_dpi;

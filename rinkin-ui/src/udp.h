@@ -5,6 +5,7 @@
 #include <winsock2.h>
 #else
 #include <netinet/in.h>
+#include <netdb.h>
 typedef int SOCKET;
 typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
@@ -15,7 +16,7 @@ typedef struct in_addr IN_ADDR;
 class UDP {
 public:
     static UDP& get_instance();
-    void reset(const char *ip);
+    void reset(const char *host);
     bool send(const char *buf, size_t len);
     bool send(const char *s);
     bool send(std::string s);
@@ -23,11 +24,12 @@ public:
     std::string receive();
 
 private:
-    UDP(const char *ip, uint16_t port);
+    UDP(const char *host, uint16_t port);
     ~UDP();
     UDP(const UDP&) = delete;
     UDP& operator=(const UDP&) = delete;
+    struct addrinfo *ai_result;
+    struct addrinfo *sock_addr_info;
     SOCKET sock = -1;
-    SOCKADDR_IN in_addr;
     const uint16_t port;
 };
