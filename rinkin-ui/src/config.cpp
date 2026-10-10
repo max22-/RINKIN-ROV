@@ -21,7 +21,8 @@ void Config::load() {
         const char *key = buf;
         char *value = strchr(buf, '=');
         if(value != NULL && value != key) {
-            value[-1] = 0;
+            *value = 0; // discard the '='
+            value++;
             if(!strcmp(key, "motors_amplitude")) {
                 config.motors_amplitude = atoi(value);
             } else if(!strcmp(key, "ip")) {
@@ -44,11 +45,16 @@ void Config::load() {
                 } else if(!strcmp(value, "false")) {
                     config.high_dpi = false;
                 } else {
-                    TraceLog(LOG_ERROR, "config.txt:%d: syntax error", i);
+                    TraceLog(LOG_ERROR, "config.txt:%d: syntax error (expected 'true' or 'false')", i);
                 }
+            } else {
+                TraceLog(LOG_ERROR, "config.txt:%d: invalid key '%s'", i, key);
             }
         } else {
-            TraceLog(LOG_ERROR, "config.txt:%d: syntax error", i);
+            if(value == NULL)
+                TraceLog(LOG_ERROR, "config.txt:%d: syntax error: value == NULL", i);
+            else if(value == key)
+                TraceLog(LOG_ERROR, "config.txt:%d: expected '='");
         }
     }
 }
