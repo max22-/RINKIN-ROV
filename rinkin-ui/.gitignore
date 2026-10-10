@@ -8,3 +8,4 @@ build.ninja
 .ninja_log
 *.jpg
 *.mp4
+config.txt
