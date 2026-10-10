@@ -52,8 +52,7 @@ int main(int argc, char* argv[]) {
 	windows_networking_init();
 	#endif
 	
-	printf("GLSL_VERSION=%d\n", GLSL_VERSION);
-	printf("%.*s\n", lighting_fs_len, lighting_fs);
+	TraceLog(LOG_INFO, "GLSL_VERSION=%d\n", GLSL_VERSION);
 	
 	#ifdef __ANDROID__
 	SetConfigFlags(FLAG_FULLSCREEN_MODE);
