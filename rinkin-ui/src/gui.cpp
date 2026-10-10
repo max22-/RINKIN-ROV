@@ -75,11 +75,11 @@ void gui() {
                     ImGui::SameLine();
                     if(!video->is_recording()) {
                         if(ImGui::Button("Enregister")) {
-                            // start recording
+                            video->start_recording("enregistrement.mp4");
                         }
                     } else {
                         if(ImGui::Button("Arrêter enregistrement")) {
-                            // stop recording
+                            video->stop_recording();
                         }
                     }
                     ImGui::SameLine();
