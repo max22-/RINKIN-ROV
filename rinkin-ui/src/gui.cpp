@@ -1,3 +1,5 @@
+#include <sstream>
+#include <iomanip>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #ifdef _WIN32
@@ -75,7 +77,11 @@ void gui() {
                     ImGui::SameLine();
                     if(!video->is_recording()) {
                         if(ImGui::Button("Enregister")) {
-                            video->start_recording("enregistrement.mp4");
+                            auto now = std::chrono::system_clock::now();
+                            auto t = std::chrono::system_clock::to_time_t(now);
+                            std::ostringstream ss;
+                            ss << std::put_time(std::localtime(&t), "%Y-%m-%d_%H-%M-%s.mp4");
+                            video->start_recording(ss.str().c_str());
                         }
                     } else {
                         if(ImGui::Button("Arrêter enregistrement")) {
