@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euxo pipefail
 
-IP=192.168.4.1
+HOST=raspberrypi
 
 if [ ! -f setup/mediamtx/mediamtx ]; then
   pushd setup/mediamtx
@@ -15,7 +15,7 @@ pushd rinkin
 GOOS=linux GOOARCH=arm64 go build
 popd
 
-rsync -avh setup rinkin@${IP}:~
-rsync -avh rinkin rinkin@${IP}:~
-ssh rinkin@${IP} "cd setup && bash setup.sh"
+rsync -avh setup pi@${HOST}:~
+rsync -avh rinkin pi@${HOST}:~
+ssh pi@${HOST} "cd setup && bash setup.sh"
 

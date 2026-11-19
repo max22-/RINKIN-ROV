@@ -21,7 +21,7 @@ sudo systemctl enable mediamtx.service
 sudo systemctl start mediamtx.service
 
 # Installation du programme en go
-cd /home/rinkin/rinkin
+cd ~/rinkin
 sudo cp -u rinkin.service /etc/systemd/system
 sudo systemctl daemon-reload
 sudo systemctl enable rinkin.service
