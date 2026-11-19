@@ -12,7 +12,7 @@ sudo apt update
 sudo apt install python3-pip -y
 
 # Installation de Mediamtx (caméra)
-cd /home/rinkin/setup/mediamtx
+cd ~/setup/mediamtx
 sudo cp -u mediamtx /usr/bin/
 sudo cp -u mediamtx.yml /etc/
 sudo cp -u mediamtx.service /etc/systemd/system
