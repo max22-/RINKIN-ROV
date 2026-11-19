@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"time"
@@ -154,6 +155,11 @@ func serialTx(port serial.Port) chan<- string {
 						name := l[1]
 						value := l[2]
 						q.Push(name, value)
+					} else if s == "#poweroff!\n" {
+						cmd := exec.Command("sudo", "poweroff")
+						if err := cmd.Run(); err != nil {
+							fmt.Fprintf(os.Stderr, "failed to run `sudo poweroff'")
+						}
 					}
 				default:
 					break loop1

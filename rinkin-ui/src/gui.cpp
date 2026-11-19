@@ -57,6 +57,10 @@ void gui() {
             motors.set_speed(i, 0);
     }
 
+    if(IsGamepadButtonPressed(gamepad_num, 13)) {
+        udp.send("#poweroff!\n");
+    }
+
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
     if(ImGui::Begin("Rinkin", nullptr, ImGuiWindowFlags_HorizontalScrollbar)) {
