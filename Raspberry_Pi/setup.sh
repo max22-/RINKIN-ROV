@@ -12,8 +12,7 @@ if [ ! -f setup/mediamtx/mediamtx ]; then
 fi
 
 pushd rinkin
-rm -f rinkin
-GOOS=linux GOOARCH=arm64 go build
+GOOS=linux GOARCH=arm64 go build
 popd
 
 rsync -avh setup pi@${HOST}:~
